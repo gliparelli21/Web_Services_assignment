@@ -1,2 +1,2 @@
-# Web_Services_assignment
-TuDublin Web Services assignment
+# WS_assignment1
+

@@ -1,0 +1,201 @@
+ProductID,Name,UnitPrice,StockQuantity,Description
+1001,NVIDIA RTX 4090,1599.99,12,High-end GPU with 24GB VRAM for 4K gaming.
+1002,AMD Ryzen 9 7950X,549.00,25,16-core 32-thread enthusiast desktop processor.
+1003,Samsung 990 Pro 2TB,179.99,40,PCIe Gen4 NVMe M.2 SSD with 7450MB/s reads.
+1004,Corsair Vengeance 32GB DDR5,115.00,60,6000MHz CL36 Dual Channel Memory Kit.
+1005,ASUS ROG Strix Z790-E,489.99,15,Intel Z790 LGA 1700 ATX Gaming Motherboard.
+1006,EVGA SuperNova 850 G6,139.50,30,850W 80 Plus Gold Fully Modular Power Supply.
+1007,NZXT H7 Flow Case,129.99,22,Mid-tower ATX case with high-airflow mesh front.
+1008,Noctua NH-D15,109.95,45,Dual-tower flagship CPU air cooler.
+1009,Western Digital Black 4TB,99.99,50,7200 RPM Internal SATA Hard Drive.
+1010,Intel Core i7-13700K,385.00,18,16-core (8P+8E) unlocked desktop processor.
+1011,MSI Ventus 3X RTX 4070,599.99,10,Mid-range Ada Lovelace architecture GPU.
+1012,G.Skill Trident Z5 64GB,229.00,15,DDR5-6400 high-capacity performance RAM.
+1013,Be Quiet! Silent Wings 4,24.90,100,120mm PWM high-performance cooling fan.
+1014,Lian Li SL-Infinity 120,29.99,85,Addressable RGB fan with daisy-chaining.
+1015,Crucial P5 Plus 1TB,89.99,55,Gen4 NVMe SSD with heat sink compatibility.
+1016,Seasonic Focus GX-1000,169.00,20,1000W 80+ Gold power supply for high-end builds.
+1017,Gigabyte M27Q Monitor,299.99,14,27-inch 1440p 170Hz IPS gaming display.
+1018,Logitech G Pro X Superlight,145.00,35,Ultra-lightweight wireless gaming mouse.
+1019,Keychron Q1 Mechanical Keyboard,169.00,12,75% layout fully customizable keyboard.
+1020,Arctic Silver 5 Thermal Paste,7.99,200,High-density polysynthetic silver thermal compound.
+1021,AMD Radeon RX 7900 XTX,949.00,8,RDNA 3 flagship GPU with 24GB GDDR6.
+1022,Intel Core i5-13600K,319.00,22,14-core mid-range gaming CPU.
+1023,ASRock B650M Pro RS,139.99,14,Micro ATX AM5 motherboard for Ryzen 7000.
+1024,Teamgroup T-Force 16GB,54.99,75,DDR4 3600MHz CL18 Gaming RAM.
+1025,Fractal Design North,149.50,11,Mid-tower case with real wood front panels.
+1026,Corsair RM1000e,159.99,28,1000W ATX 3.0 fully modular power supply.
+1027,Arctic Liquid Freezer II 360,124.99,19,All-in-one liquid CPU cooler with 360mm rad.
+1028,Kingston FURY Renegade 1TB,92.00,42,High-speed Gen4 SSD for gaming and content.
+1029,SteelSeries Apex Pro,179.99,20,Mechanical keyboard with adjustable actuation.
+1030,Razer DeathAdder V3 Pro,149.99,30,Ergonomic lightweight wireless gaming mouse.
+1031,ASUS TUF Gaming RTX 4080,1199.99,5,Durable high-performance 40-series GPU.
+1032,AMD Ryzen 5 7600X,229.00,40,Budget-friendly 6-core AM5 processor.
+1033,MSI MAG B650 Tomahawk,219.99,12,Solid AM5 motherboard with great VRMs.
+1034,Corsair Dominator 32GB,185.00,25,Premium DDR5 memory with CAPELLIX LEDs.
+1035,Western Digital SN850X 1TB,109.99,38,Top-tier PCIe 4.0 gaming SSD.
+1036,Phanteks NV7 Case,219.99,7,Showcase full-tower case with seamless glass.
+1037,Thermaltake Toughpower 750W,105.00,33,80+ Gold semi-modular power supply.
+1038,Deepcool AK620,64.99,50,High-performance dual-tower air cooler.
+1039,Seagate IronWolf 8TB,189.99,15,NAS-optimized 7200RPM hard drive.
+1040,Intel Core i9-13900KS,729.00,4,Special edition 6GHz out-of-the-box CPU.
+1041,Gigabyte Eagle RTX 3060,289.99,18,Entry-level 1080p Ray Tracing GPU.
+1042,Crucial RAM 16GB DDR5,45.00,100,Basic 4800MHz DDR5 non-RGB stick.
+1043,Corsair iCUE H150i Elite,199.99,14,360mm AIO with LCD screen pump head.
+1044,Lian Li O11 Dynamic EVO,175.00,20,Modular mid-tower popular for water cooling.
+1045,Sabrent Rocket 4 Plus 2TB,199.99,22,DirectStorage ready high-speed NVMe.
+1046,Cooler Master V850 SFX,155.00,12,Small form factor 850W Gold PSU.
+1047,ASUS ProArt Z790,470.00,6,Creator-focused motherboard with Thunderbolt 4.
+1048,Corsair K70 RGB TKL,139.99,24,Tournament grade mechanical keyboard.
+1049,BenQ Zowie XL2546K,499.00,10,240Hz esports monitor for competitive play.
+1050,Thermal Grizzly Kryonaut,11.99,150,High-end thermal grease for overclocking.
+1051,Sapphire Pulse RX 7800 XT,499.99,15,Efficient 1440p gaming AMD GPU.
+1052,Intel Core i5-12400F,149.00,45,Best value budget gaming CPU (no iGPU).
+1053,Gigabyte B760 AORUS Elite,179.99,25,Mainstream Intel B760 motherboard.
+1054,G.Skill Ripjaws V 32GB,69.99,80,Classic DDR4 3200MHz CL16 RAM kit.
+1055,Samsung 870 EVO 1TB,89.99,65,Reliable SATA SSD for bulk storage.
+1056,Hyte Y60 Case,199.99,9,Panoramic glass case with vertical GPU mount.
+1057,SeaSonic Prime 1300W,320.00,3,80+ Platinum ultra-high wattage PSU.
+1058,NZXT T120 RGB Cooler,49.99,40,Sleek single-tower air cooler with RGB.
+1059,Toshiba X300 10TB,220.00,10,High-performance 3.5-inch desktop HDD.
+1060,AMD Ryzen 7 5800X3D,315.00,30,Legendary AM4 gaming CPU with V-Cache.
+1061,Zotac Gaming RTX 4060 Ti,389.99,22,Compact 40-series card for small builds.
+1062,Patriot Viper Steel 16GB,48.00,55,DDR4 4400MHz extreme speed memory.
+1063,Noctua NF-A12x25,32.90,120,Industry-leading quiet 120mm case fan.
+1064,Corsair 4000D Airflow,94.99,50,Minimalist high-airflow mid-tower case.
+1065,PNY CS2140 500GB,34.99,90,Entry-level Gen4 NVMe for OS boot drive.
+1066,FSP Dagger Pro 650W,99.00,20,SFX power supply for Mini-ITX builds.
+1067,ASUS ROG Crosshair X670E,699.00,5,Flagship AM5 overclocking motherboard.
+1068,Razer Huntsman V2,159.00,18,Optical switch fast-response keyboard.
+1069,Dell UltraSharp U2723QE,580.00,8,4K IPS Black monitor for color accuracy.
+1070,CableMod Mesh Kit,99.90,25,Custom braided PSU cable extension set.
+1071,XFX Speedster RX 7600,269.99,30,Affordable RDNA 3 1080p GPU.
+1072,Intel Core i3-13100,145.00,50,Quad-core productivity and light gaming CPU.
+1073,MSI PRO Z790-P,209.00,15,Professional series Z790 motherboard.
+1074,Kingston FURY Beast 32GB,105.00,45,Low-profile DDR5 5600MHz RAM.
+1075,Silicon Power A60 1TB,45.99,110,Budget NVMe M.2 SSD for general use.
+1076,Cooler Master TD500 Mesh,109.99,18,ATX case with 3D diamond mesh front.
+1077,Corsair SF750,165.00,14,Platinum rated SFX power supply.
+1078,Be Quiet! Dark Rock Pro 4,89.90,30,Silent premium dual-tower air cooler.
+1079,WD Red Plus 12TB,249.99,8,Large capacity NAS hard drive.
+1080,AMD Ryzen 7 7700X,340.00,20,Efficient 8-core gaming and productivity CPU.
+1081,EVGA RTX 3060 Ti,399.00,12,Excellent 1440p performer (Last Gen).
+1082,Teamgroup Elite 8GB,22.00,150,Basic 3200MHz DDR4 SODIMM for laptops.
+1083,Noctua NH-L9i,44.95,35,Ultra low-profile cooler for ITX cases.
+1084,Phanteks Eclipse G360A,99.99,25,Mesh front ATX case with triple RGB fans.
+1085,Lexar NM790 4TB,249.99,12,Fast and high-capacity Gen4 M.2 SSD.
+1086,Thermaltake Smart 600W,45.00,60,Budget 80+ White non-modular PSU.
+1087,MSI MPG X670E Carbon,459.99,8,WiFi 6E enabled high-end AM5 board.
+1088,Logitech G502 X Plus,159.99,28,Wireless RGB gaming mouse with hybrid switches.
+1089,ASUS ROG Swift PG27AQN,949.00,4,360Hz 1440p professional gaming monitor.
+1090,Elgato Stream Deck MK.2,149.99,22,15-key customizable studio controller.
+1091,Gigabyte Windforce RTX 4070 Ti,799.99,9,Triple fan cooled 1440p beast.
+1092,AMD Ryzen 5 5600,135.00,100,Price-to-performance king for AM4 builds.
+1093,ASRock Z790 PG Lightning,189.99,15,Affordable Z790 Intel motherboard.
+1094,ADATA XPG Lancer 32GB,129.99,30,DDR5 6000MHz memory with RGB sync.
+1095,Crucial MX500 2TB,119.99,40,Reliable 2.5-inch SATA SSD for bulk files.
+1096,SAMA IM01 Case,69.99,25,Compact mATX/ITX versatile small case.
+1097,Apevia Prestige 800W,66.00,45,Budget-friendly 80+ Gold power supply.
+1098,ID-COOLING IS-55,39.99,40,Slim 55mm tall low-profile air cooler.
+1099,HGST Ultrastar 14TB,280.00,5,Enterprise-grade high-capacity HDD.
+1100,Intel Core i9-12900K,399.00,12,12th Gen flagship 16-core processor.
+1101,NVIDIA RTX 4060,299.00,40,Efficient 1080p gaming card with DLSS 3.
+1102,AMD Ryzen 3 4100,65.00,80,Entry-level 4-core processor for basic tasks.
+1103,ASUS Prime B550M-A,109.99,35,Budget AM4 motherboard with WiFi.
+1104,Silicon Power 16GB DDR4,34.99,120,Affordable 3200MHz RAM for home PCs.
+1105,Samsung 970 EVO Plus 2TB,129.00,50,Proven PCIe 3.0 NVMe performance.
+1106,BitFenix Nova Mesh,64.99,20,Affordable high-airflow micro-ATX case.
+1107,Thermaltake GF3 1000W,179.99,15,ATX 3.0 ready Gold power supply.
+1108,Cooler Master Hyper 212,49.99,80,Legendary single-tower air cooler.
+1109,Seagate BarraCuda 2TB,49.99,100,Standard 7200RPM 3.5-inch hard drive.
+1110,Intel Core i5-13400,239.00,30,Efficient 10-core mid-range desktop CPU.
+1111,PowerColor Hellhound RX 7900 XT,749.99,12,High-end RDNA 3 graphics card.
+1112,Corsair Vengeance LPX 64GB,145.00,20,Large capacity DDR4 kit for editing.
+1113,Lian Li UNI Fan AL120,89.99,50,3-pack of interlocking performance fans.
+1114,Antec Performance 1 FT,159.99,10,Full-tower case with temperature display.
+1115,Western Digital Blue 1TB,44.99,150,Standard 2.5-inch SATA SSD for upgrades.
+1116,Corsair CX650M,69.99,40,Semi-modular 650W 80+ Bronze PSU.
+1117,Gigabyte X670 Gaming X,249.99,14,Entry-level X670 AM5 motherboard.
+1118,Logitech G213 Prodigy,49.99,60,Membrane gaming keyboard with RGB.
+1119,Samsung Odyssey G7,549.99,12,32-inch curved 240Hz QLED monitor.
+1120,TP-Link WiFi 6 Card,39.99,70,PCIe wireless adapter with Bluetooth 5.2.
+1121,NVIDIA RTX 3050,229.00,35,Budget Ray Tracing entry graphics.
+1122,AMD Ryzen 7 7800X3D,449.00,10,Best-in-class gaming CPU with 3D Cache.
+1123,MSI MAG Z790 Tomahawk,269.99,20,High-quality Z790 board with WiFi 6E.
+1124,Teamgroup T-Create 32GB,99.99,35,Stable DDR5 memory for content creators.
+1125,Kingston A400 480GB,28.99,200,Cheap SATA SSD for older PC revivals.
+1126,Fractal Design Meshify 2,159.99,15,Premium airflow-focused ATX case.
+1127,NZXT C850 Gold,119.99,22,Reliable 850W 80+ Gold power supply.
+1128,Scythe Fuma 3,49.99,30,Offset dual-tower air cooler for RAM clearance.
+1129,WD Blue 6TB HDD,115.00,45,Massive storage for photos and videos.
+1130,Intel Core i7-12700K,289.00,25,Powerful 12th Gen 12-core processor.
+1131,EVGA RTX 3070,499.00,8,Solid 1440p gaming performance (Refurb).
+1132,Crucial 32GB DDR4,65.00,70,Standard dual-stick 3200MHz memory kit.
+1133,Thermalright Peerless Assassin,34.90,150,Best value dual-tower air cooler.
+1134,Be Quiet! Pure Base 500DX,109.90,18,Silent mid-tower with subtle ARGB.
+1135,Sabrent Rocket 1TB,79.99,60,Gen3 NVMe SSD with reliable TBW.
+1136,Cooler Master MWE Gold 850,115.00,20,Full-modular 850W Gold efficiency PSU.
+1137,ASUS ROG Strix B650-I,259.99,12,Mini-ITX AM5 board for small builds.
+1138,Razer Viper V2 Pro,149.99,25,Symmetrical ultra-light wireless mouse.
+1139,LG UltraGear 34GP83A-B,749.99,6,34-inch Ultrawide 144Hz IPS monitor.
+1140,Blue Yeti USB Mic,129.00,30,High-fidelity microphone for streaming.
+1141,ASRock Phantom RX 6700 XT,329.99,15,Affordable 1440p AMD graphics card.
+1142,Intel Celeron G6900,59.00,40,Dual-core LGA 1700 CPU for office use.
+1143,Biostar B660MX-E,85.00,20,Entry level B660 Micro-ATX motherboard.
+1144,Mushkin Redline 16GB,59.99,45,High-performance DDR4 with low latency.
+1145,Teamgroup MP34 2TB,95.00,55,DRAM-cached PCIe 3.0 NVMe SSD.
+1146,Deepcool CH510,79.99,30,Clean ATX case with built-in GPU bracket.
+1147,Silverstone ST1500-TI,420.00,2,1500W 80+ Titanium power supply.
+1148,EK-AIO Basic 240,89.99,15,No-RGB focused high performance AIO.
+1149,Toshiba P300 3TB,69.99,40,Value-oriented 3.5-inch desktop hard drive.
+1150,AMD Ryzen 9 5900X,330.00,25,12-core productivity beast for AM4.
+1151,Sapphire Nitro+ RX 7900 XTX,1049.00,6,Premium RDNA 3 card with vapor chamber.
+1152,G.Skill Flare X5 32GB,104.99,50,AMD EXPO optimized DDR5-6000 RAM.
+1153,ARCTIC P12 PWM PST,9.99,300,Pressure-optimized 120mm value fan.
+1154,Lian Li PC-O11 Air Mini,119.99,14,Airflow-optimized small form factor case.
+1155,Western Digital Green 2TB,55.00,90,Energy-efficient SATA SSD for storage.
+1156,Rosewill Capstone 550W,54.99,35,80+ Gold semi-modular budget PSU.
+1157,MSI MEG Z790 ACE,609.99,4,Top-tier E-ATX Intel motherboard.
+1158,SteelSeries Rival 3,29.99,100,Budget-friendly ergonomic gaming mouse.
+1159,AOC C24G1A,149.99,25,24-inch 165Hz curved gaming monitor.
+1160,Creative Sound BlasterX G6,129.99,15,External high-res gaming DAC/Amp.
+1161,PNY XLR8 RTX 4080,1149.00,7,Triple fan 40-series GPU with RGB.
+1162,Intel Core i5-11400,165.00,30,Reliable 6-core 11th Gen processor.
+1163,ASUS Prime X670-P,235.00,18,Standard ATX X670 AM5 motherboard.
+1164,Corsair Vengeance RGB 16GB,65.00,85,3600MHz DDR4 with dynamic lighting.
+1165,Samsung 980 1TB,79.99,70,DRAM-less PCIe 3.0 NVMe for fast boots.
+1166,Montech Sky Two,99.00,22,Dual-glass side panels with 4 ARGB fans.
+1167,Be Quiet! Straight Power 11,149.00,12,Ultra-silent 850W 80+ Platinum PSU.
+1168,Deepcool AS500 Plus,59.99,25,Single-tower cooler with dual 140mm fans.
+1169,Seagate Exos 18TB,310.00,10,Enterprise-level massive capacity HDD.
+1170,Intel Core i7-13700F,349.00,20,Locked 16-core CPU for gaming rigs.
+1171,Gigabyte Windforce RTX 3060,299.00,25,Solid mid-range 12GB VRAM GPU.
+1172,G.Skill Aegis 16GB,36.00,120,Budget-friendly DDR4 3000MHz memory.
+1173,ASUS ROG Ryujin III 360,329.99,8,Flagship AIO with 3.5-inch LCD screen.
+1174,Cooler Master Q300L,45.00,55,Micro-ATX case with patterned dust filters.
+1175,Crucial P3 2TB,99.99,65,Affordable PCIe 3.0 M.2 storage.
+1176,Thermaltake Smart BM2 750W,74.99,30,80+ Bronze semi-modular power unit.
+1177,MSI B550-A Pro,139.99,40,Reliable AM4 motherboard for Ryzen 5000.
+1178,Corsair Nightsword RGB,79.99,20,Tunable weight FPS/MOBA gaming mouse.
+1179,MSI Optix MAG274QRF-QD,419.00,10,Fast IPS 1440p monitor with Quantum Dot.
+1180,Glorious Model O Wireless,79.99,35,Lightweight honeycomb wireless mouse.
+1181,AMD Radeon RX 6600,199.99,50,Best value 1080p gaming graphics card.
+1182,Intel Core i5-13500,249.00,25,Versatile 14-core mid-range CPU.
+1183,ASRock Z790 Steel Legend,249.99,12,Durable Z790 board with PCIe 5.0.
+1184,Kingston FURY Impact 16GB,52.00,80,DDR5 SODIMM for gaming laptops.
+1185,SK Hynix Gold P31 1TB,85.00,45,Power-efficient high speed NVMe.
+1186,Phanteks Enthoo Pro,119.99,10,Full-tower case with massive expansion.
+1187,SeaSonic B12 BC-750,79.99,28,Non-modular 750W 80+ Bronze PSU.
+1188,Noctua NH-U12S,74.95,40,Slim 120mm tower air cooler.
+1189,WD Gold 4TB,149.00,15,Enterprise-class high reliability HDD.
+1190,AMD Ryzen 5 7600,199.00,60,Non-X efficient 6-core AM5 processor.
+1191,NVIDIA RTX 4070 Founders,599.00,5,Original dual-fan compact 4070.
+1192,Patriot Signature 8GB,19.99,200,Basic DDR4 2666MHz for office builds.
+1193,Fractal Design Celsius S36,179.99,12,Quiet 360mm AIO with smart mode.
+1194,Lian Li Lancool 216,99.99,30,Airflow-focused case with two 160mm fans.
+1195,Samsung 870 QVO 4TB,249.99,20,High-capacity 2.5-inch SATA SSD.
+1196,EVGA 600 W1,49.99,55,Standard 600W 80+ White power supply.
+1197,ASUS TUF Gaming B760M,159.99,25,Micro-ATX Intel board with WiFi.
+1198,HyperX Alloy Origins,89.99,30,Full-size mechanical keyboard with RGB.
+1199,Acer Nitro XV272U,249.99,18,27-inch 1440p 170Hz gaming monitor.
+1200,Elgato Facecam,149.99,20,Professional 1080p60 streaming webcam.
