@@ -11,10 +11,6 @@ load_dotenv()
 # Get MongoDB connection string from environment variable
 MONGODB_URI = os.getenv('MONGODB_URI')
 
-if not MONGODB_URI:
-    raise ValueError("MONGODB_URI not found in .env file")
-
-
 def get_database_and_collection(client):
     db_name = os.getenv('DB_NAME', 'products_db')
     collection_name = os.getenv('COLLECTION_NAME', 'products')
