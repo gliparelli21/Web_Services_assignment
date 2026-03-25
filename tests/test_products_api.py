@@ -162,7 +162,7 @@ def test_convert_price_to_eur(client, monkeypatch):
             return None
 
         def json(self):
-            return {"rates": {"EUR": 0.9}}
+            return {"rates": {"EUR": 0.92}}
 
     monkeypatch.setattr(products_api.httpx, "get", lambda *args, **kwargs: FakeResponse())
 
@@ -170,4 +170,4 @@ def test_convert_price_to_eur(client, monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["ProductID"] == 1001
-    assert body["price_eur"] == round(body["price_usd"] * 0.9, 2)
+    assert body["price_eur"] == round(body["price_usd"] * 0.92, 2)
