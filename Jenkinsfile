@@ -6,9 +6,9 @@ pipeline {
     }
 
     parameters {
-        string(name: 'GIT_REPO_URL', defaultValue: '', description: 'GitHub repository URL to pull code from')
+        string(name: 'GIT_REPO_URL', defaultValue: 'https://github.com/gliparelli21/Web_Services_assignment.git', description: 'GitHub repository URL to pull code from')
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to clone')
-        string(name: 'MONGODB_URI', defaultValue: '', description: 'MongoDB connection string used by the API container')
+        string(name: 'MONGODB_URI', defaultValue: 'mongodb+srv://a00051810_db_user:RMlv8psWujeKtkUT@cluster0.9u8vpbv.mongodb.net/', description: 'MongoDB connection string used by the API container')
         string(name: 'DB_NAME', defaultValue: 'products_db', description: 'MongoDB database name')
         string(name: 'COLLECTION_NAME', defaultValue: 'products', description: 'MongoDB collection name')
     }
@@ -19,7 +19,6 @@ pipeline {
         API_CONTAINER = 'ws-assignment-api-container'
         PIPELINE_NETWORK = 'ws-assignment-net'
         API_PORT = '8000'
-        NORMALIZED_REPO_URL = ''
     }
 
     stages {
@@ -27,17 +26,10 @@ pipeline {
             steps {
                 script {
                     if (!params.GIT_REPO_URL?.trim()) {
-                        error('GIT_REPO_URL is required for the GitHub pull step.')
+                        error('GIT_REPO_URL is required.')
                     }
                     if (!params.MONGODB_URI?.trim()) {
-                        error('MONGODB_URI is required so the API can access MongoDB during tests.')
-                    }
-
-                    def rawRepo = params.GIT_REPO_URL.trim()
-                    if (rawRepo ==~ /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/) {
-                        env.NORMALIZED_REPO_URL = "https://github.com/${rawRepo}.git"
-                    } else {
-                        env.NORMALIZED_REPO_URL = rawRepo
+                        error('MONGODB_URI is required.')
                     }
                 }
             }
@@ -45,25 +37,14 @@ pipeline {
 
         stage('Pull Code from GitHub') {
             steps {
-                sh '''
-                    rm -rf "${WORK_DIR}"
-                    git clone --depth 1 --branch "${BRANCH}" "${NORMALIZED_REPO_URL}" "${WORK_DIR}" || {
-                        echo "Failed to clone repository: ${NORMALIZED_REPO_URL}"
-                        echo "Use either owner/repo or a full URL like https://github.com/owner/repo.git"
-                        exit 1
-                    }
-                '''
+                sh 'rm -rf "${WORK_DIR}"; git clone --depth 1 --branch "${BRANCH}" "${GIT_REPO_URL}" "${WORK_DIR}"'
             }
         }
 
         stage('Build Ubuntu API Container') {
             steps {
                 dir("${WORK_DIR}") {
-                    sh '''
-                        docker network create "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true
-                        docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true
-                        docker build -t "${API_IMAGE}" -f Dockerfile.api .
-                    '''
+                    sh 'docker network create "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true; docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true; docker build -t "${API_IMAGE}" -f Dockerfile.api .'
                 }
             }
         }
@@ -89,14 +70,12 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     sh '''
-                        for i in $(seq 1 30); do
-                            if docker exec "${API_CONTAINER}" curl -fsS http://localhost:8000/docs >/dev/null 2>&1; then
-                                exit 0
-                            fi
+                        for i in $(seq 1 60); do
+                            docker exec "${API_CONTAINER}" curl -fsS http://localhost:8000/docs >/dev/null 2>&1 && exit 0
                             sleep 2
                         done
-
-                        echo "API did not become ready in time."
+                        echo "API failed to start. Last 20 logs:"
+                        docker logs "${API_CONTAINER}" | tail -20
                         exit 1
                     '''
                 }
@@ -106,7 +85,7 @@ pipeline {
         stage('Seed MongoDB Data') {
             steps {
                 dir("${WORK_DIR}") {
-                    sh 'docker exec "${API_CONTAINER}" python3 upload_to_mongodb.py'
+                    sh 'docker exec "${API_CONTAINER}" python3 mongodb.py'
                 }
             }
         }
@@ -114,7 +93,7 @@ pipeline {
         stage('Run Python Unit Tests') {
             steps {
                 dir("${WORK_DIR}") {
-                    sh 'docker exec "${API_CONTAINER}" pytest -q tests'
+                    sh 'docker exec "${API_CONTAINER}" env PYTHONPATH=/app pytest -q tests'
                 }
             }
         }
@@ -123,11 +102,11 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     sh '''
-                        docker run --rm \
+                        cat postman/products_api.postman_collection.json | docker run --rm \
                             --network "${PIPELINE_NETWORK}" \
-                            -v "$(pwd)/postman:/etc/newman" \
+                            -i \
                             postman/newman:alpine \
-                            run /etc/newman/products_api.postman_collection.json \
+                            run /dev/stdin \
                             --env-var "baseUrl=http://${API_CONTAINER}:8000" \
                             --env-var "newProductId=990001"
                     '''
@@ -138,11 +117,7 @@ pipeline {
         stage('Generate README.txt') {
             steps {
                 dir("${WORK_DIR}") {
-                    sh '''
-                        docker exec "${API_CONTAINER}" python3 generate_readme_txt.py
-                        docker cp "${API_CONTAINER}:/app/README.txt" "$(pwd)/README.txt"
-                        test -f README.txt
-                    '''
+                    sh 'docker exec "${API_CONTAINER}" python3 generate_readme_txt.py; docker cp "${API_CONTAINER}:/app/README.txt" "$(pwd)/README.txt"; test -f README.txt'
                 }
             }
         }
@@ -150,10 +125,7 @@ pipeline {
 
     post {
         always {
-            sh '''
-                docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true
-                docker network rm "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true
-            '''
+            sh 'docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true; docker network rm "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true'
         }
     }
 }
