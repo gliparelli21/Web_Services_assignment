@@ -189,4 +189,3 @@ def convert_price_to_eur(product_id: ProductIdPath) -> dict[str, Any]:
         "price_eur": eur_price,
         "rate": rate,
     }
-    }
