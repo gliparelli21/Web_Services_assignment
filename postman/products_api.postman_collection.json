@@ -1,0 +1,283 @@
+{
+  "info": {
+    "name": "Products API Pipeline Tests",
+    "_postman_id": "6a391d67-ac4a-4d63-a2d5-3f6bc4d2d5c0",
+    "description": "Postman collection used by Jenkins via Newman to validate Products API endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "delete stale product",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/deleteOne/{{newProductId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "deleteOne",
+            "{{newProductId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200 or 404', function () {",
+              "    pm.expect([200, 404]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "add new product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ProductID\": {{newProductId}},\n  \"Name\": \"Sample Pipeline Product\",\n  \"UnitPrice\": 99.5,\n  \"StockQuantity\": 7,\n  \"Description\": \"Created by Newman\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/addNew",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "addNew"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test('product id matches', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.ProductID).to.eql(Number(pm.variables.get('newProductId')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "get single product",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/getSingleProduct/{{newProductId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "getSingleProduct",
+            "{{newProductId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "get all",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/getAll",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "getAll"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('response is array', function () {",
+              "    pm.expect(pm.response.json()).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "starts with N",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/startsWith/N",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "startsWith",
+            "N"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "paginate",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/paginate?start_id=1000&end_id=3000",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "paginate"
+          ],
+          "query": [
+            {
+              "key": "start_id",
+              "value": "1000"
+            },
+            {
+              "key": "end_id",
+              "value": "3000"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('returns <= 10 items', function () {",
+              "    pm.expect(pm.response.json().length).to.be.at.most(10);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "convert to eur",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/convert/{{newProductId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "convert",
+            "{{newProductId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('contains EUR price', function () {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body).to.have.property('price_eur');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "delete new product",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/deleteOne/{{newProductId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "deleteOne",
+            "{{newProductId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "newProductId",
+      "value": "990001"
+    }
+  ]
+}
