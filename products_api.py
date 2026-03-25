@@ -23,13 +23,10 @@ mongo_client: MongoClient | None = None
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global mongo_client
-    mongo_client = _build_client()
-    try:
-        yield
-    finally:
-        if mongo_client is not None:
-            mongo_client.close()
-            mongo_client = None
+    yield
+    if mongo_client is not None:
+        mongo_client.close()
+        mongo_client = None
 
 
 app = FastAPI(title="Products API", version="1.0.0", lifespan=lifespan)
@@ -66,7 +63,7 @@ def _build_client() -> MongoClient:
     if not MONGODB_URI:
         raise HTTPException(status_code=500, detail="MONGODB_URI is not configured.")
     try:
-        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=10000)
         client.admin.command("ping")
         return client
     except ServerSelectionTimeoutError as exc:
@@ -75,11 +72,17 @@ def _build_client() -> MongoClient:
         raise HTTPException(status_code=500, detail=f"MongoDB configuration error: {exc}") from exc
     except OperationFailure as exc:
         raise HTTPException(status_code=401, detail=f"MongoDB authentication error: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"MongoDB connection error: {exc}") from exc
 
 
 def _get_collection() -> Collection:
+    global mongo_client
     if mongo_client is None:
-        raise HTTPException(status_code=500, detail="MongoDB client is not initialized.")
+        try:
+            mongo_client = _build_client()
+        except HTTPException:
+            raise
     return mongo_client[DB_NAME][COLLECTION_NAME]
 
 
