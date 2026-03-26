@@ -11,6 +11,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - JENKINS_OPTS=--httpPort=8080
+      - CASC_JENKINS_CONFIG=/var/jenkins_home/jenkins.yaml
     restart: unless-stopped
     networks:
       - jenkins-network

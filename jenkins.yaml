@@ -1,0 +1,22 @@
+jenkins:
+  credentials:
+    system:
+      domainCredentials:
+        - credentials:
+            - plain:
+                scope: GLOBAL
+                id: "mongodb-uri"
+                secret: "${MONGODB_URI_SECRET}"
+                description: "MongoDB Atlas connection string"
+            - plain:
+                scope: GLOBAL
+                id: "postman-api-key"
+                secret: "${POSTMAN_API_KEY_SECRET}"
+                description: "Postman API key for monitoring integration"
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+  
+  gitHub:
+    apiRateLimitChecker: ThrottleForNormalize
