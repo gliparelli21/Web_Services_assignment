@@ -63,6 +63,8 @@ pipeline {
                         docker run -d ^
                             --name %API_CONTAINER% ^
                             --network %PIPELINE_NETWORK% ^
+                            --dns 8.8.8.8 ^
+                            --dns 1.1.1.1 ^
                             -e MONGODB_URI=%MONGODB_URI% ^
                             -e DB_NAME=%DB_NAME% ^
                             -e COLLECTION_NAME=%COLLECTION_NAME% ^
@@ -119,10 +121,6 @@ pipeline {
                         
                         for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
                         
-                        echo Testing API convert endpoint directly before Newman:
-                        docker exec %API_CONTAINER% curl -v http://localhost:8000/convert/990001 2>&1 || echo "Direct test failed"
-                        
-                        echo Running Newman tests with verbose output...
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
                             -v "!CURRENT_DIR!/postman:/postman" ^
@@ -131,8 +129,7 @@ pipeline {
                             --env-var "baseUrl=http://%API_CONTAINER%:8000" ^
                             --env-var "newProductId=990001" ^
                             --reporters json,cli ^
-                            --reporter-json-export /reports/newman-report.json ^
-                            -v
+                            --reporter-json-export /reports/newman-report.json
                     '''
                 }
             }
