@@ -1,25 +1,27 @@
 services:
-  jenkins:
+  api:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: jenkins-server
+      dockerfile: Dockerfile.api
+    container_name: api-server
     ports:
-      - "8080:8080"
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+      - "8000:8000"
     environment:
-      - JENKINS_OPTS=--httpPort=8080
-      - CASC_JENKINS_CONFIG=/var/jenkins_home/jenkins.yaml
-    restart: unless-stopped
+      - MONGODB_URI=${MONGODB_URI}
     networks:
-      - jenkins-network
+      - pipeline-network
 
-volumes:
-  jenkins_home:
-    driver: local
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - pipeline-network
 
 networks:
-  jenkins-network:
+  pipeline-network:
     driver: bridge
