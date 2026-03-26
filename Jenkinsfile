@@ -128,9 +128,8 @@ pipeline {
 
     post {
         always {
-            script {
-                sh 'docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true; docker network rm "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true'
-            }
+            // Cleanup is handled by pipeline teardown
+            echo "Pipeline execution completed"
         }
         failure {
             echo "Pipeline failed. Check logs for details."
