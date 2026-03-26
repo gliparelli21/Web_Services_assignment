@@ -128,7 +128,9 @@ pipeline {
 
     post {
         always {
-            sh 'docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true; docker network rm "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true'
+            script {
+                sh 'docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true; docker network rm "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true'
+            }
         }
         failure {
             echo "Pipeline failed. Check logs for details."
