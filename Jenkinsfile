@@ -73,7 +73,18 @@ pipeline {
                         $colName = $env:COLLECTION_NAME
                         $port = $env:API_PORT
                         $image = $env:API_IMAGE
+                        
+                        Write-Output "Starting API container with:"
+                        Write-Output "Container: $container"
+                        Write-Output "Network: $network"
+                        Write-Output "MongoDB URI: $($mongoUri.Substring(0, [Math]::Min(50, $mongoUri.Length)))..."
+                        Write-Output "DB: $dbName, Collection: $colName"
+                        
                         docker run -d --name $container --network $network -e MONGODB_URI=$mongoUri -e DB_NAME=$dbName -e COLLECTION_NAME=$colName -p "${port}:8000" $image
+                        
+                        Start-Sleep -Seconds 3
+                        Write-Output "Container logs:"
+                        docker logs $container
                     '''
                 }
             }
@@ -86,16 +97,18 @@ pipeline {
                         $maxAttempts = 60
                         $container = $env:API_CONTAINER
                         for ($i = 1; $i -le $maxAttempts; $i++) {
-                            $result = docker exec $container curl -fsS http://localhost:8000/docs 2>$null
+                            $result = docker exec $container curl -fsS http://localhost:8000/docs 2>&1
                             if ($LASTEXITCODE -eq 0) {
                                 Write-Output "API is ready"
                                 exit 0
                             }
-                            Write-Output "Attempt $i/$maxAttempts - API not ready yet, waiting..."
+                            if ($i -eq 1 -or $i % 5 -eq 0) {
+                                Write-Output "Attempt $i/$maxAttempts - Status: $($LASTEXITCODE)"
+                            }
                             Start-Sleep -Seconds 2
                         }
-                        Write-Output "API failed to start. Last 20 logs:"
-                        docker logs $container | Select-Object -Last 20
+                        Write-Output "API failed to start. Container logs:"
+                        docker logs $container
                         exit 1
                     '''
                 }
@@ -131,6 +144,11 @@ pipeline {
                         $container = $env:API_CONTAINER
                         $network = $env:PIPELINE_NETWORK
                         if (-not (Test-Path "reports")) { New-Item -ItemType Directory -Path "reports" | Out-Null }
+                        
+                        Write-Output "Testing API endpoint before Newman:"
+                        docker exec $container curl -v http://localhost:8000/docs 2>&1 | Select-Object -First 20
+                        
+                        Write-Output "Running Newman tests..."
                         $collection = Get-Content postman/products_api.postman_collection.json -Raw
                         $collection | docker run --rm --network $network -i postman/newman:alpine run /dev/stdin --env-var "baseUrl=http://${container}:8000" --env-var "newProductId=990001" --reporters json,cli --reporter-json-export reports/newman-report.json
                     '''
