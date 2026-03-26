@@ -150,7 +150,7 @@ pipeline {
 
     post {
         always {
-            bat 'docker rm -f %API_CONTAINER% >nul 2>&1 || true; docker network rm %PIPELINE_NETWORK% >nul 2>&1 || true'
+            echo "Pipeline completed. API container remains active at http://localhost:8000/docs"
         }
         failure {
             echo "Pipeline failed. Check logs for details."
