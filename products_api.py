@@ -171,16 +171,14 @@ def convert_price_to_eur(product_id: ProductIdPath) -> dict[str, Any]:
     usd_price = float(product["UnitPrice"])
     try:
         response = httpx.get(
-            "https://api.exchangerate.host/latest",
-            params={"base": "USD", "symbols": "EUR"},
+            "https://api.frankfurter.app/latest",
+            params={"from": "USD", "to": "EUR"},
             timeout=10.0,
         )
         response.raise_for_status()
         data = response.json()
-        if not data.get("success", True):
-            raise ValueError("API returned success=false")
         rate = data["rates"]["EUR"]
-    except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
+    except (httpx.HTTPError, KeyError, TypeError) as exc:
         raise HTTPException(status_code=502, detail=f"Could not fetch exchange rate: {exc}") from exc
 
     eur_price = round(usd_price * float(rate), 2)

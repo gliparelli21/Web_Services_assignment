@@ -162,7 +162,7 @@ def test_convert_price_to_eur(client, monkeypatch):
             return None
 
         def json(self):
-            return {"success": True, "base": "USD", "rates": {"EUR": 0.92}}
+            return {"rates": {"EUR": 0.92}}
 
     monkeypatch.setattr(products_api.httpx, "get", lambda *args, **kwargs: FakeResponse())
 
