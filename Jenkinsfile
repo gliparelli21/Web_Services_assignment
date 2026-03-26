@@ -114,16 +114,20 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     bat '''
+                        setlocal enabledelayedexpansion
                         if not exist reports mkdir reports
-                        type postman/products_api.postman_collection.json | docker run --rm ^
+                        
+                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
+                        
+                        docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
-                            -i ^
-                            postman/newman:alpine ^
-                            run /dev/stdin ^
+                            -v "!CURRENT_DIR!/postman:/postman" ^
+                            -v "!CURRENT_DIR!/reports:/reports" ^
+                            postman/newman:alpine run /postman/products_api.postman_collection.json ^
                             --env-var "baseUrl=http://%API_CONTAINER%:8000" ^
                             --env-var "newProductId=990001" ^
                             --reporters json,cli ^
-                            --reporter-json-export reports/newman-report.json
+                            --reporter-json-export /reports/newman-report.json
                     '''
                 }
             }
