@@ -37,7 +37,7 @@ pipeline {
 
         stage('Pull Code from GitHub') {
             steps {
-                batch '''
+                bat '''
                     if exist "%WORK_DIR%" rmdir /s /q "%WORK_DIR%"
                     git clone --depth 1 --branch "%BRANCH%" "%GIT_REPO_URL%" "%WORK_DIR%"
                 '''
@@ -47,7 +47,7 @@ pipeline {
         stage('Build Ubuntu API Container') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch '''
+                    bat '''
                         docker network create %PIPELINE_NETWORK% >nul 2>&1 || true
                         docker rm -f %API_CONTAINER% >nul 2>&1 || true
                         docker build -t %API_IMAGE% -f Dockerfile.api .
@@ -59,7 +59,7 @@ pipeline {
         stage('Run API Container In Background') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch '''
+                    bat '''
                         docker run -d ^
                             --name %API_CONTAINER% ^
                             --network %PIPELINE_NETWORK% ^
@@ -76,7 +76,7 @@ pipeline {
         stage('Wait For API Readiness') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch '''
+                    bat '''
                         setlocal enabledelayedexpansion
                         for /L %%i in (1,1,60) do (
                             docker exec %API_CONTAINER% curl -fsS http://localhost:8000/docs >nul 2>&1
@@ -97,7 +97,7 @@ pipeline {
         stage('Seed MongoDB Data') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch 'docker exec %API_CONTAINER% python3 mongodb.py'
+                    bat 'docker exec %API_CONTAINER% python3 mongodb.py'
                 }
             }
         }
@@ -105,7 +105,7 @@ pipeline {
         stage('Run Python Unit Tests') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch 'docker exec %API_CONTAINER% python3 -m pytest tests -q'
+                    bat 'docker exec %API_CONTAINER% python3 -m pytest tests -q'
                 }
             }
         }
@@ -113,7 +113,7 @@ pipeline {
         stage('Run Postman Tests With Newman') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch '''
+                    bat '''
                         if not exist reports mkdir reports
                         type postman/products_api.postman_collection.json | docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
@@ -132,7 +132,7 @@ pipeline {
         stage('Generate README.txt') {
             steps {
                 dir("${WORK_DIR}") {
-                    batch '''
+                    bat '''
                         docker exec %API_CONTAINER% python3 generate_readme_txt.py
                         docker cp %API_CONTAINER%:/app/README.txt .
                         if not exist README.txt exit /b 1
@@ -144,7 +144,7 @@ pipeline {
 
     post {
         always {
-            batch 'docker rm -f %API_CONTAINER% >nul 2>&1 || true; docker network rm %PIPELINE_NETWORK% >nul 2>&1 || true'
+            bat 'docker rm -f %API_CONTAINER% >nul 2>&1 || true; docker network rm %PIPELINE_NETWORK% >nul 2>&1 || true'
         }
         failure {
             echo "Pipeline failed. Check logs for details."
