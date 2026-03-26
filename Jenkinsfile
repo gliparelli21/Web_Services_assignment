@@ -44,7 +44,14 @@ pipeline {
         stage('Build Ubuntu API Container') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell 'docker network create "${env:PIPELINE_NETWORK}" -ErrorAction SilentlyContinue; docker rm -f "${env:API_CONTAINER}" -ErrorAction SilentlyContinue; docker build -t "${env:API_IMAGE}" -f Dockerfile.api .'
+                    powershell '''
+                        $network = $env:PIPELINE_NETWORK
+                        $container = $env:API_CONTAINER
+                        $image = $env:API_IMAGE
+                        docker network create $network -ErrorAction SilentlyContinue
+                        docker rm -f $container -ErrorAction SilentlyContinue
+                        docker build -t $image -f Dockerfile.api .
+                    '''
                 }
             }
         }
@@ -52,7 +59,16 @@ pipeline {
         stage('Run API Container In Background') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell "docker run -d --name `"${env:API_CONTAINER}`" --network `"${env:PIPELINE_NETWORK}`" -e MONGODB_URI=`"${env:MONGODB_URI}`" -e DB_NAME=`"${env:DB_NAME}`" -e COLLECTION_NAME=`"${env:COLLECTION_NAME}`" -p ${env:API_PORT}:8000 `"${env:API_IMAGE}`""
+                    powershell '''
+                        $container = $env:API_CONTAINER
+                        $network = $env:PIPELINE_NETWORK
+                        $mongoUri = $env:MONGODB_URI
+                        $dbName = $env:DB_NAME
+                        $colName = $env:COLLECTION_NAME
+                        $port = $env:API_PORT
+                        $image = $env:API_IMAGE
+                        docker run -d --name $container --network $network -e MONGODB_URI=$mongoUri -e DB_NAME=$dbName -e COLLECTION_NAME=$colName -p "${port}:8000" $image
+                    '''
                 }
             }
         }
