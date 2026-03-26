@@ -5,10 +5,6 @@ pipeline {
         timestamps()
     }
 
-    environment {
-        MONGODB_URI = credentials('mongodb-uri')
-    }
-
     parameters {
         string(name: 'GIT_REPO_URL', defaultValue: 'https://github.com/gliparelli21/Web_Services_assignment.git', description: 'GitHub repository URL to pull code from')
         string(name: 'BRANCH', defaultValue: 'main', description: 'Git branch to clone')
@@ -17,6 +13,7 @@ pipeline {
     }
 
     environment {
+        MONGODB_URI = credentials('mongodb-uri')
         WORK_DIR = 'github-src'
         API_IMAGE = 'ws-assignment-api'
         API_CONTAINER = 'ws-assignment-api-container'
