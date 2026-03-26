@@ -119,6 +119,10 @@ pipeline {
                         
                         for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
                         
+                        echo Testing API convert endpoint directly before Newman:
+                        docker exec %API_CONTAINER% curl -v http://localhost:8000/convert/990001 2>&1 || echo "Direct test failed"
+                        
+                        echo Running Newman tests with verbose output...
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
                             -v "!CURRENT_DIR!/postman:/postman" ^
@@ -127,7 +131,8 @@ pipeline {
                             --env-var "baseUrl=http://%API_CONTAINER%:8000" ^
                             --env-var "newProductId=990001" ^
                             --reporters json,cli ^
-                            --reporter-json-export /reports/newman-report.json
+                            --reporter-json-export /reports/newman-report.json ^
+                            -v
                     '''
                 }
             }
