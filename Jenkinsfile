@@ -129,22 +129,9 @@ pipeline {
     post {
         always {
             sh 'docker rm -f "${API_CONTAINER}" >/dev/null 2>&1 || true; docker network rm "${PIPELINE_NETWORK}" >/dev/null 2>&1 || true'
-            
-            // Archive Newman reports for history
-            archiveArtifacts artifacts: 'github-src/reports/*.json', allowEmptyArchive: true
-            
-            // Publish test results (optional, requires HTML Publisher plugin)
-            publishHTML([
-                reportDir: 'github-src/reports',
-                reportFiles: 'newman-report.html',
-                reportName: 'Newman Report',
-                keepAll: true,
-                allowMissing: true
-            ])
         }
         failure {
-            // Send alert on test failure (optional)
-            echo "Postman tests failed. Check Newman report for details."
+            echo "Pipeline failed. Check logs for details."
         }
     }
 }
