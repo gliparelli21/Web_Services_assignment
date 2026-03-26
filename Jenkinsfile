@@ -37,12 +37,9 @@ pipeline {
 
         stage('Pull Code from GitHub') {
             steps {
-                powershell '''
-                    $workDir = $env:WORK_DIR
-                    $branch = $env:BRANCH
-                    $repoUrl = $env:GIT_REPO_URL
-                    if (Test-Path $workDir) { Remove-Item -Path $workDir -Recurse -Force }
-                    git clone --depth 1 --branch $branch $repoUrl $workDir
+                batch '''
+                    if exist "%WORK_DIR%" rmdir /s /q "%WORK_DIR%"
+                    git clone --depth 1 --branch "%BRANCH%" "%GIT_REPO_URL%" "%WORK_DIR%"
                 '''
             }
         }
@@ -50,13 +47,10 @@ pipeline {
         stage('Build Ubuntu API Container') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $network = $env:PIPELINE_NETWORK
-                        $container = $env:API_CONTAINER
-                        $image = $env:API_IMAGE
-                        docker network create $network 2>$null
-                        docker rm -f $container 2>$null
-                        docker build -t $image -f Dockerfile.api .
+                    batch '''
+                        docker network create %PIPELINE_NETWORK% >nul 2>&1 || true
+                        docker rm -f %API_CONTAINER% >nul 2>&1 || true
+                        docker build -t %API_IMAGE% -f Dockerfile.api .
                     '''
                 }
             }
@@ -65,26 +59,15 @@ pipeline {
         stage('Run API Container In Background') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $container = $env:API_CONTAINER
-                        $network = $env:PIPELINE_NETWORK
-                        $mongoUri = $env:MONGODB_URI
-                        $dbName = $env:DB_NAME
-                        $colName = $env:COLLECTION_NAME
-                        $port = $env:API_PORT
-                        $image = $env:API_IMAGE
-                        
-                        Write-Output "Starting API container with:"
-                        Write-Output "Container: $container"
-                        Write-Output "Network: $network"
-                        Write-Output "MongoDB URI: $($mongoUri.Substring(0, [Math]::Min(50, $mongoUri.Length)))..."
-                        Write-Output "DB: $dbName, Collection: $colName"
-                        
-                        docker run -d --name $container --network $network --dns 8.8.8.8 --dns 8.8.4.4 -e MONGODB_URI=$mongoUri -e DB_NAME=$dbName -e COLLECTION_NAME=$colName -p "${port}:8000" $image
-                        
-                        Start-Sleep -Seconds 3
-                        Write-Output "Container logs:"
-                        docker logs $container
+                    batch '''
+                        docker run -d ^
+                            --name %API_CONTAINER% ^
+                            --network %PIPELINE_NETWORK% ^
+                            -e MONGODB_URI=%MONGODB_URI% ^
+                            -e DB_NAME=%DB_NAME% ^
+                            -e COLLECTION_NAME=%COLLECTION_NAME% ^
+                            -p %API_PORT%:8000 ^
+                            %API_IMAGE%
                     '''
                 }
             }
@@ -93,23 +76,19 @@ pipeline {
         stage('Wait For API Readiness') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $maxAttempts = 60
-                        $container = $env:API_CONTAINER
-                        for ($i = 1; $i -le $maxAttempts; $i++) {
-                            $result = docker exec $container curl -fsS http://localhost:8000/docs 2>&1
-                            if ($LASTEXITCODE -eq 0) {
-                                Write-Output "API is ready"
-                                exit 0
-                            }
-                            if ($i -eq 1 -or $i % 5 -eq 0) {
-                                Write-Output "Attempt $i/$maxAttempts - Status: $($LASTEXITCODE)"
-                            }
-                            Start-Sleep -Seconds 2
-                        }
-                        Write-Output "API failed to start. Container logs:"
-                        docker logs $container
-                        exit 1
+                    batch '''
+                        setlocal enabledelayedexpansion
+                        for /L %%i in (1,1,60) do (
+                            docker exec %API_CONTAINER% curl -fsS http://localhost:8000/docs >nul 2>&1
+                            if !errorlevel! equ 0 (
+                                echo API is ready
+                                exit /b 0
+                            )
+                            timeout /t 2 /nobreak >nul
+                        )
+                        echo API failed to start
+                        docker logs %API_CONTAINER%
+                        exit /b 1
                     '''
                 }
             }
@@ -118,10 +97,7 @@ pipeline {
         stage('Seed MongoDB Data') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $container = $env:API_CONTAINER
-                        docker exec $container python3 mongodb.py
-                    '''
+                    batch 'docker exec %API_CONTAINER% python3 mongodb.py'
                 }
             }
         }
@@ -129,10 +105,7 @@ pipeline {
         stage('Run Python Unit Tests') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $container = $env:API_CONTAINER
-                        docker exec $container python3 -m pytest tests -q
-                    '''
+                    batch 'docker exec %API_CONTAINER% python3 -m pytest tests -q'
                 }
             }
         }
@@ -140,17 +113,17 @@ pipeline {
         stage('Run Postman Tests With Newman') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $container = $env:API_CONTAINER
-                        $network = $env:PIPELINE_NETWORK
-                        if (-not (Test-Path "reports")) { New-Item -ItemType Directory -Path "reports" | Out-Null }
-                        
-                        Write-Output "Testing API endpoint before Newman:"
-                        docker exec $container curl -v http://localhost:8000/docs 2>&1 | Select-Object -First 20
-                        
-                        Write-Output "Running Newman tests..."
-                        $collection = Get-Content postman/products_api.postman_collection.json -Raw
-                        $collection | docker run --rm --network $network -i postman/newman:alpine run /dev/stdin --env-var "baseUrl=http://${container}:8000" --env-var "newProductId=990001" --reporters json,cli --reporter-json-export reports/newman-report.json
+                    batch '''
+                        if not exist reports mkdir reports
+                        type postman/products_api.postman_collection.json | docker run --rm ^
+                            --network %PIPELINE_NETWORK% ^
+                            -i ^
+                            postman/newman:alpine ^
+                            run /dev/stdin ^
+                            --env-var "baseUrl=http://%API_CONTAINER%:8000" ^
+                            --env-var "newProductId=990001" ^
+                            --reporters json,cli ^
+                            --reporter-json-export reports/newman-report.json
                     '''
                 }
             }
@@ -159,14 +132,10 @@ pipeline {
         stage('Generate README.txt') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        $container = $env:API_CONTAINER
-                        docker exec $container python3 generate_readme_txt.py
-                        docker cp "${container}:/app/README.txt" .
-                        if (-not (Test-Path "README.txt")) {
-                            Write-Error "README.txt not generated"
-                            exit 1
-                        }
+                    batch '''
+                        docker exec %API_CONTAINER% python3 generate_readme_txt.py
+                        docker cp %API_CONTAINER%:/app/README.txt .
+                        if not exist README.txt exit /b 1
                     '''
                 }
             }
@@ -175,8 +144,7 @@ pipeline {
 
     post {
         always {
-            // Cleanup is handled by pipeline teardown
-            echo "Pipeline execution completed"
+            batch 'docker rm -f %API_CONTAINER% >nul 2>&1 || true; docker network rm %PIPELINE_NETWORK% >nul 2>&1 || true'
         }
         failure {
             echo "Pipeline failed. Check logs for details."
