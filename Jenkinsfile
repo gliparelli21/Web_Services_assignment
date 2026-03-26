@@ -28,8 +28,8 @@ pipeline {
                     if (!params.GIT_REPO_URL?.trim()) {
                         error('GIT_REPO_URL is required.')
                     }
-                    if (!params.MONGODB_URI?.trim()) {
-                        error('MONGODB_URI is required.')
+                    if (!env.MONGODB_URI?.trim()) {
+                        error('MONGODB_URI credential is required.')
                     }
                 }
             }
