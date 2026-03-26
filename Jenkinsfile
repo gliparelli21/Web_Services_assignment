@@ -80,7 +80,7 @@ pipeline {
                         Write-Output "MongoDB URI: $($mongoUri.Substring(0, [Math]::Min(50, $mongoUri.Length)))..."
                         Write-Output "DB: $dbName, Collection: $colName"
                         
-                        docker run -d --name $container --network $network -e MONGODB_URI=$mongoUri -e DB_NAME=$dbName -e COLLECTION_NAME=$colName -p "${port}:8000" $image
+                        docker run -d --name $container --network $network --dns 8.8.8.8 --dns 8.8.4.4 -e MONGODB_URI=$mongoUri -e DB_NAME=$dbName -e COLLECTION_NAME=$colName -p "${port}:8000" $image
                         
                         Start-Sleep -Seconds 3
                         Write-Output "Container logs:"
