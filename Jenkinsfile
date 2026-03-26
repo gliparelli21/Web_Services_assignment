@@ -37,7 +37,13 @@ pipeline {
 
         stage('Pull Code from GitHub') {
             steps {
-                powershell 'if (Test-Path "${env:WORK_DIR}") { Remove-Item -Path "${env:WORK_DIR}" -Recurse -Force }; git clone --depth 1 --branch "${env:BRANCH}" "${env:GIT_REPO_URL}" "${env:WORK_DIR}"'
+                powershell '''
+                    $workDir = $env:WORK_DIR
+                    $branch = $env:BRANCH
+                    $repoUrl = $env:GIT_REPO_URL
+                    if (Test-Path $workDir) { Remove-Item -Path $workDir -Recurse -Force }
+                    git clone --depth 1 --branch $branch $repoUrl $workDir
+                '''
             }
         }
 
@@ -48,8 +54,8 @@ pipeline {
                         $network = $env:PIPELINE_NETWORK
                         $container = $env:API_CONTAINER
                         $image = $env:API_IMAGE
-                        docker network create $network -ErrorAction SilentlyContinue
-                        docker rm -f $container -ErrorAction SilentlyContinue
+                        docker network create $network 2>$null
+                        docker rm -f $container 2>$null
                         docker build -t $image -f Dockerfile.api .
                     '''
                 }
@@ -78,16 +84,18 @@ pipeline {
                 dir("${WORK_DIR}") {
                     powershell '''
                         $maxAttempts = 60
+                        $container = $env:API_CONTAINER
                         for ($i = 1; $i -le $maxAttempts; $i++) {
-                            try {
-                                docker exec "${env:API_CONTAINER}" curl -fsS http://localhost:8000/docs | Out-Null
+                            $result = docker exec $container curl -fsS http://localhost:8000/docs 2>$null
+                            if ($LASTEXITCODE -eq 0) {
+                                Write-Output "API is ready"
                                 exit 0
-                            } catch {
-                                Start-Sleep -Seconds 2
                             }
+                            Write-Output "Attempt $i/$maxAttempts - API not ready yet, waiting..."
+                            Start-Sleep -Seconds 2
                         }
                         Write-Output "API failed to start. Last 20 logs:"
-                        docker logs "${env:API_CONTAINER}" | Select-Object -Last 20
+                        docker logs $container | Select-Object -Last 20
                         exit 1
                     '''
                 }
@@ -97,7 +105,10 @@ pipeline {
         stage('Seed MongoDB Data') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell 'docker exec "${env:API_CONTAINER}" python3 mongodb.py'
+                    powershell '''
+                        $container = $env:API_CONTAINER
+                        docker exec $container python3 mongodb.py
+                    '''
                 }
             }
         }
@@ -105,7 +116,10 @@ pipeline {
         stage('Run Python Unit Tests') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell 'docker exec "${env:API_CONTAINER}" python3 -m pytest tests -q'
+                    powershell '''
+                        $container = $env:API_CONTAINER
+                        docker exec $container python3 -m pytest tests -q
+                    '''
                 }
             }
         }
@@ -114,9 +128,11 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     powershell '''
-                        if (-not (Test-Path "reports")) { New-Item -ItemType Directory -Path "reports" }
-                        $collectionContent = Get-Content postman/products_api.postman_collection.json
-                        $collectionContent | docker run --rm --network "${env:PIPELINE_NETWORK}" -i postman/newman:alpine run /dev/stdin --env-var "baseUrl=http://${env:API_CONTAINER}:8000" --env-var "newProductId=990001" --reporters json,cli --reporter-json-export reports/newman-report.json
+                        $container = $env:API_CONTAINER
+                        $network = $env:PIPELINE_NETWORK
+                        if (-not (Test-Path "reports")) { New-Item -ItemType Directory -Path "reports" | Out-Null }
+                        $collection = Get-Content postman/products_api.postman_collection.json -Raw
+                        $collection | docker run --rm --network $network -i postman/newman:alpine run /dev/stdin --env-var "baseUrl=http://${container}:8000" --env-var "newProductId=990001" --reporters json,cli --reporter-json-export reports/newman-report.json
                     '''
                 }
             }
@@ -126,9 +142,13 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     powershell '''
-                        docker exec "${env:API_CONTAINER}" python3 generate_readme_txt.py
-                        docker cp "${env:API_CONTAINER}:/app/README.txt" .
-                        if (-not (Test-Path "README.txt")) { exit 1 }
+                        $container = $env:API_CONTAINER
+                        docker exec $container python3 generate_readme_txt.py
+                        docker cp "${container}:/app/README.txt" .
+                        if (-not (Test-Path "README.txt")) {
+                            Write-Error "README.txt not generated"
+                            exit 1
+                        }
                     '''
                 }
             }
