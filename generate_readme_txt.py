@@ -58,6 +58,7 @@ def create_completion_zip() -> None:
                 zipf.write(file_path, arcname=file)
     
     print(f"Created {zip_filename}")
+    print(f"ZIPFILE={zip_filename}")
 
 
 def main() -> None:

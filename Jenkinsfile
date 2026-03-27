@@ -139,9 +139,22 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     bat '''
-                        docker exec %API_CONTAINER% python3 generate_readme_txt.py
+                        setlocal enabledelayedexpansion
+                        
+                        REM Run script and capture zip filename
+                        for /f "tokens=2 delims==" %%F in ('docker exec %API_CONTAINER% python3 generate_readme_txt.py ^| findstr "ZIPFILE="') do (
+                            set "ZIP_FILE=%%F"
+                        )
+                        
                         docker cp %API_CONTAINER%:/app/README.txt .
-                        docker cp %API_CONTAINER%:/app/complete-*.zip . 2>nul || echo "No zip file found yet"
+                        
+                        if defined ZIP_FILE (
+                            docker cp %API_CONTAINER%:/app/!ZIP_FILE! .
+                        ) else (
+                            echo Warning: No zip file generated
+                            exit /b 1
+                        )
+                        
                         if not exist README.txt exit /b 1
                     '''
                 }
