@@ -1,4 +1,6 @@
+from datetime import datetime
 from pathlib import Path
+import zipfile
 
 
 ENDPOINTS = [
@@ -33,8 +35,34 @@ def build_readme_text() -> str:
     return "\n".join(lines)
 
 
+def create_completion_zip() -> None:
+    now = datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H-%M-%S")
+    zip_filename = f"complete-{date_str}-{time_str}.zip"
+    
+    files_to_include = [
+        "products_api.py",
+        "mongodb.py",
+        "Dockerfile.api",
+        "requirements.txt",
+        "generate_readme_txt.py",
+        "README.txt",
+        "Jenkinsfile",
+    ]
+    
+    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file in files_to_include:
+            file_path = Path(file)
+            if file_path.exists():
+                zipf.write(file_path, arcname=file)
+    
+    print(f"Created {zip_filename}")
+
+
 def main() -> None:
     Path("README.txt").write_text(build_readme_text(), encoding="utf-8")
+    create_completion_zip()
 
 
 if __name__ == "__main__":

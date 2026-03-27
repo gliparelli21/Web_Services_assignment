@@ -141,6 +141,7 @@ pipeline {
                     bat '''
                         docker exec %API_CONTAINER% python3 generate_readme_txt.py
                         docker cp %API_CONTAINER%:/app/README.txt .
+                        docker cp %API_CONTAINER%:/app/complete-*.zip . 2>nul || echo "No zip file found yet"
                         if not exist README.txt exit /b 1
                     '''
                 }
@@ -151,6 +152,7 @@ pipeline {
     post {
         always {
             echo "Pipeline completed. API container remains active at http://localhost:8000/docs"
+            archiveArtifacts artifacts: 'github-src/complete-*.zip', allowEmptyArchive: true
         }
         failure {
             echo "Pipeline failed. Check logs for details."
