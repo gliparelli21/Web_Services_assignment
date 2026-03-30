@@ -1,0 +1,114 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+        timeout(time: 10, unit: 'MINUTES')
+    }
+
+    triggers {
+        cron('H/30 * * * *')
+    }
+
+    parameters {
+        string(name: 'MONITORING_URL', defaultValue: 'http://localhost:8000', description: 'API endpoint to monitor')
+    }
+
+    environment {
+        MONITORING_CREDENTIALS = credentials('api-monitoring-credentials')
+        WORK_DIR = 'github-src'
+        API_CONTAINER = 'ws-assignment-api-container'
+        PIPELINE_NETWORK = 'ws-assignment-net'
+        REPORTS_DIR = 'monitoring-reports'
+    }
+
+    stages {
+        stage('Validate Monitoring Credentials') {
+            steps {
+                script {
+                    if (!env.MONITORING_CREDENTIALS?.trim()) {
+                        error('api-monitoring-credentials is required. Please configure in Jenkins.')
+                    }
+                    echo 'Monitoring credentials validated (no conflicts detected)'
+                }
+            }
+        }
+
+        stage('Check API Availability') {
+            steps {
+                bat '''
+                    setlocal enabledelayedexpansion
+                    
+                    REM Check if container is running
+                    docker exec %API_CONTAINER% curl -fsS http://localhost:8000/docs >nul 2>&1
+                    if !errorlevel! equ 0 (
+                        echo [PASS] API is running and responding
+                    ) else (
+                        echo [FAIL] API is not responding
+                        docker logs %API_CONTAINER%
+                        exit /b 1
+                    )
+                '''
+            }
+        }
+
+        stage('Run Postman Monitor Collection') {
+            steps {
+                dir("${WORK_DIR}") {
+                    bat '''
+                        setlocal enabledelayedexpansion
+                        
+                        if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
+                        
+                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
+                        
+                        docker run --rm ^
+                            --network %PIPELINE_NETWORK% ^
+                            -v "!CURRENT_DIR!/postman:/postman" ^
+                            -v "!CURRENT_DIR!/%REPORTS_DIR%:/reports" ^
+                            postman/newman:alpine run /postman/products_api.postman_collection.json ^
+                            --env-var "baseUrl=%MONITORING_URL%" ^
+                            --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
+                            --reporters json,cli ^
+                            --reporter-json-export /reports/monitoring-report.json ^
+                            --disable-unicode
+                    '''
+                }
+            }
+        }
+
+        stage('Validate Test Results') {
+            steps {
+                script {
+                    dir("${WORK_DIR}") {
+                        def report = readJSON file: "${REPORTS_DIR}/monitoring-report.json"
+                        def failureCount = report.run.failures.size()
+                        
+                        if (failureCount > 0) {
+                            echo "Monitoring detected ${failureCount} test failure(s)"
+                            unstable("${failureCount} tests failed in monitoring")
+                        } else {
+                            echo "All monitoring tests passed"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            dir("${WORK_DIR}") {
+                archiveArtifacts artifacts: "${REPORTS_DIR}/**", allowEmptyArchive: true
+            }
+        }
+        failure {
+            script {
+                echo "API Monitoring Failed"
+                dir("${WORK_DIR}") {
+                    bat 'if exist %REPORTS_DIR%\\monitoring-report.json type %REPORTS_DIR%\\monitoring-report.json'
+                }
+            }
+        }
+    }
+}
