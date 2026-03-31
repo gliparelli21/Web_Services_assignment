@@ -52,43 +52,22 @@ pipeline {
         stage('Run Postman Monitor') {
             steps {
                 dir("${WORK_DIR}") {
-                    powershell '''
-                        if (!(Test-Path "monitoring-reports")) {
-                            New-Item -ItemType Directory -Path "monitoring-reports" -Force | Out-Null
-                        }
+                    bat '''
+                        setlocal enabledelayedexpansion
+                        if not exist monitoring-reports mkdir monitoring-reports
                         
-                        $CurrentDir = (Get-Location).Path
+                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
                         
-                        # Get API container IP on the custom network
-                        try {
-                            $ApiInfo = docker inspect $env:API_CONTAINER | ConvertFrom-Json
-                            $ApiIp = $ApiInfo[0].NetworkSettings.Networks[$env:PIPELINE_NETWORK].IPAddress
-                            
-                            if (-not $ApiIp) {
-                                Write-Host "[ERROR] Could not get API container IP from network $env:PIPELINE_NETWORK"
-                                exit 1
-                            }
-                        } catch {
-                            Write-Host "[ERROR] Failed to inspect API container: $_"
-                            exit 1
-                        }
-                        
-                        Write-Host "[INFO] API container IP: $ApiIp"
-                        
-                        & docker run --rm `
-                            --network $env:PIPELINE_NETWORK `
-                            -v "$CurrentDir/postman:/postman" `
-                            -v "$CurrentDir/monitoring-reports:/reports" `
-                            postman/newman:alpine run /postman/products_api.postman_collection.json `
-                            --env-var "baseUrl=http://$($ApiIp):$env:API_PORT" `
-                            --env-var "apiMonitoringKey=$env:MONITORING_CREDENTIALS_USR" `
-                            --reporters json,cli `
+                        docker run --rm ^
+                            --add-host host.docker.internal:host-gateway ^
+                            --network %PIPELINE_NETWORK% ^
+                            -v "!CURRENT_DIR!/postman:/postman" ^
+                            -v "!CURRENT_DIR!/monitoring-reports:/reports" ^
+                            postman/newman:alpine run /postman/products_api.postman_collection.json ^
+                            --env-var "baseUrl=http://host.docker.internal:%API_PORT%" ^
+                            --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
+                            --reporters json,cli ^
                             --reporter-json-export /reports/monitoring-report.json
-                        
-                        if ($LASTEXITCODE -ne 0) {
-                            Write-Host "[ERROR] Newman tests failed with exit code $LASTEXITCODE"
-                            exit $LASTEXITCODE
-                        }
                     '''
                 }
             }
