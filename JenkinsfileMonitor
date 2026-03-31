@@ -97,11 +97,18 @@ pipeline {
                     Write-Host "  Postman: $PostmanPathDocker/postman"
                     Write-Host "  Reports: $ReportsPathDocker"
                     
+                    # Build docker arguments
+                    $PostmanVolume = "$PostmanPathDocker`:/postman"
+                    $ReportsVolume = "$ReportsPathDocker`:/reports"
+                    
+                    Write-Host "  Docker Postman Volume: $PostmanVolume"
+                    Write-Host "  Docker Reports Volume: $ReportsVolume"
+                    
                     # Run Newman
                     & docker run --rm `
                         --network ws-assignment-net `
-                        -v "${PostmanPathDocker}:/postman" `
-                        -v "${ReportsPathDocker}:/reports" `
+                        -v $PostmanVolume `
+                        -v $ReportsVolume `
                         postman/newman:alpine run /postman/products_api.postman_collection.json `
                         --env-var "baseUrl=$env:MONITORING_URL" `
                         --env-var "apiMonitoringKey=$env:MONITORING_CREDENTIALS_USR" `
