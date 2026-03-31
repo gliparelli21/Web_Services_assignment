@@ -12,10 +12,14 @@ pipeline {
 
     environment {
         MONITORING_CREDENTIALS = credentials('api-monitoring-credentials')
+        MONGODB_URI = credentials('mongodb-uri')
         WORK_DIR = 'github-src'
         API_CONTAINER = 'ws-assignment-api-container'
+        API_IMAGE = 'ws-assignment-api'
         PIPELINE_NETWORK = 'ws-assignment-net'
         API_PORT = '8000'
+        DB_NAME = 'products_db'
+        COLLECTION_NAME = 'products'
         GIT_REPO_URL = 'https://github.com/gliparelli21/Web_Services_assignment.git'
         BRANCH = 'main'
     }
@@ -32,29 +36,47 @@ pipeline {
 
         stage('Check API Availability') {
             steps {
-                bat '''
-                    setlocal enabledelayedexpansion
-                    
-                    docker inspect -f "{{.State.Running}}" %API_CONTAINER% >nul 2>&1
-                    if !errorlevel! equ 0 (
-                        echo [PASS] API container is running
-                    ) else (
-                        echo [FAIL] API container not running
-                        exit /b 1
-                    )
-                    
-                    for /L %%i in (1,1,15) do (
-                        docker exec %API_CONTAINER% curl -s http://localhost:%API_PORT%/docs >nul 2>&1
+                dir("${WORK_DIR}") {
+                    bat '''
+                        setlocal enabledelayedexpansion
+                        
+                        docker inspect -f "{{.State.Running}}" %API_CONTAINER% >nul 2>&1
                         if !errorlevel! equ 0 (
-                            echo [PASS] API responding
+                            echo [PASS] API container already running
                             exit /b 0
                         )
-                        timeout /t 2 /nobreak >nul
-                    )
-                    
-                    echo [WARN] API check timed out, proceeding anyway
-                    exit /b 0
-                '''
+                        
+                        echo [INFO] API container not running, building and starting...
+                        docker network create %PIPELINE_NETWORK% >nul 2>&1 || true
+                        docker rm -f %API_CONTAINER% >nul 2>&1 || true
+                        docker build -t %API_IMAGE% -f Dockerfile.api .
+                        
+                        docker run -d ^
+                            --name %API_CONTAINER% ^
+                            --network %PIPELINE_NETWORK% ^
+                            --dns 8.8.8.8 ^
+                            --dns 1.1.1.1 ^
+                            -e MONGODB_URI=%MONGODB_URI% ^
+                            -e DB_NAME=%DB_NAME% ^
+                            -e COLLECTION_NAME=%COLLECTION_NAME% ^
+                            -p %API_PORT%:8000 ^
+                            %API_IMAGE%
+                        
+                        for /L %%i in (1,1,60) do (
+                            docker exec %API_CONTAINER% curl -fsS http://localhost:8000/docs >nul 2>&1
+                            if !errorlevel! equ 0 (
+                                echo [PASS] API ready
+                                docker exec %API_CONTAINER% python3 mongodb.py >nul 2>&1
+                                exit /b 0
+                            )
+                            timeout /t 2 /nobreak >nul
+                        )
+                        
+                        echo [FAIL] API startup timeout
+                        docker logs %API_CONTAINER%
+                        exit /b 1
+                    '''
+                }
             }
         }
 
@@ -72,7 +94,7 @@ pipeline {
                             -v "!CURRENT_DIR!/postman:/postman" ^
                             -v "!CURRENT_DIR!/monitoring-reports:/reports" ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
-                            --env-var "baseUrl=http://host.docker.internal:%API_PORT%" ^
+                            --env-var "baseUrl=http://localhost:%API_PORT%" ^
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
                             --reporters json,cli ^
                             --reporter-json-export /reports/monitoring-report.json
@@ -85,14 +107,19 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     script {
-                        def report = readJSON file: 'monitoring-reports/monitoring-report.json'
-                        def failures = report.run.failures.size()
-                        
-                        if (failures > 0) {
-                            echo "Monitoring detected ${failures} failure(s)"
-                            unstable("${failures} tests failed")
-                        } else {
-                            echo "All tests passed"
+                        try {
+                            def report = readJSON file: 'monitoring-reports/monitoring-report.json'
+                            def failures = report.run.failures.size()
+                            
+                            if (failures > 0) {
+                                echo "Monitoring detected ${failures} failure(s)"
+                                unstable("${failures} tests failed")
+                            } else {
+                                echo "All tests passed"
+                            }
+                        } catch(e) {
+                            echo "Could not parse report: ${e.message}"
+                            unstable("Report parsing failed")
                         }
                     }
                 }
