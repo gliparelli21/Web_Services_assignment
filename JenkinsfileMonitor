@@ -73,16 +73,18 @@ pipeline {
                         
                         if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
                         
-                        REM Get current directory and run Newman
+                        REM Get current directory and convert backslashes to forward slashes for Docker
                         for /f "delims=" %%D in ('cd') do set WORK_PATH=%%D
                         
-                        echo [INFO] Working directory: %WORK_PATH%
-                        echo [INFO] Running Postman collection from %WORK_PATH%/postman
+                        REM Convert backslashes to forward slashes for Docker mount paths
+                        set DOCKER_PATH=!WORK_PATH:\=/!
+                        
+                        echo [INFO] Running Postman collection from !DOCKER_PATH!/postman
                         
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
-                            -v %WORK_PATH%/postman:/postman ^
-                            -v %WORK_PATH%/%REPORTS_DIR%:/reports ^
+                            -v !DOCKER_PATH!/postman:/postman ^
+                            -v !DOCKER_PATH!/%REPORTS_DIR%:/reports ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
                             --env-var "baseUrl=%MONITORING_URL%" ^
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
