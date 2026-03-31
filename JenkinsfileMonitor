@@ -100,8 +100,8 @@ pipeline {
                     # Run Newman
                     & docker run --rm `
                         --network ws-assignment-net `
-                        -v "$PostmanPathDocker:/postman" `
-                        -v "$ReportsPathDocker:/reports" `
+                        -v "${PostmanPathDocker}:/postman" `
+                        -v "${ReportsPathDocker}:/reports" `
                         postman/newman:alpine run /postman/products_api.postman_collection.json `
                         --env-var "baseUrl=$env:MONITORING_URL" `
                         --env-var "apiMonitoringKey=$env:MONITORING_CREDENTIALS_USR" `
