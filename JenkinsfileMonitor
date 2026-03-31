@@ -68,28 +68,25 @@ pipeline {
         stage('Run Postman Monitor Collection') {
             steps {
                 dir("${WORK_DIR}") {
-                    bat '''
-                        setlocal enabledelayedexpansion
+                    powershell '''
+                        $WorkPath = Get-Location
+                        $DockerPath = $WorkPath.Path -replace '\\\\', '/'
                         
-                        if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
+                        Write-Host "[INFO] Running Postman collection from $DockerPath/postman"
                         
-                        REM Get current directory and convert backslashes to forward slashes for Docker
-                        for /f "delims=" %%D in ('cd') do set WORK_PATH=%%D
+                        if (-not (Test-Path "monitoring-reports")) {
+                            New-Item -ItemType Directory -Path "monitoring-reports" | Out-Null
+                        }
                         
-                        REM Convert backslashes to forward slashes for Docker mount paths
-                        set DOCKER_PATH=!WORK_PATH:\\=/!
-                        
-                        echo [INFO] Running Postman collection from !DOCKER_PATH!/postman
-                        
-                        docker run --rm ^
-                            --network %PIPELINE_NETWORK% ^
-                            -v !DOCKER_PATH!/postman:/postman ^
-                            -v !DOCKER_PATH!/%REPORTS_DIR%:/reports ^
-                            postman/newman:alpine run /postman/products_api.postman_collection.json ^
-                            --env-var "baseUrl=%MONITORING_URL%" ^
-                            --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
-                            --reporters json,cli ^
-                            --reporter-json-export /reports/monitoring-report.json ^
+                        docker run --rm `
+                            --network ws-assignment-net `
+                            -v "$DockerPath/postman:/postman" `
+                            -v "$DockerPath/monitoring-reports:/reports" `
+                            postman/newman:alpine run /postman/products_api.postman_collection.json `
+                            --env-var "baseUrl=$env:MONITORING_URL" `
+                            --env-var "apiMonitoringKey=$env:MONITORING_CREDENTIALS_USR" `
+                            --reporters json,cli `
+                            --reporter-json-export /reports/monitoring-report.json `
                             --disable-unicode
                     '''
                 }
