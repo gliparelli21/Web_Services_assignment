@@ -67,28 +67,49 @@ pipeline {
 
         stage('Run Postman Monitor Collection') {
             steps {
-                dir("${WORK_DIR}") {
-                    powershell '''
-                        $WorkPath = Get-Location
-                        $DockerPath = $WorkPath.Path -replace '\\\\', '/'
+                script {
+                    def workspaceRoot = env.WORKSPACE
+                    def postmanSource = "${workspaceRoot}/../Web_Services_assignment/postman"
+                    def reportsDest = "${workspaceRoot}/${WORK_DIR}/monitoring-reports"
+                    
+                    powershell """
+                        # Verify postman collection exists in workspace
+                        \$postmanSource = "${postmanSource}".Replace('\\\\', '/')
+                        \$reportsDest = "${reportsDest}".Replace('\\\\', '/')
+                        \$postmanFile = "\$postmanSource/products_api.postman_collection.json"
                         
-                        Write-Host "[INFO] Running Postman collection from $DockerPath/postman"
+                        Write-Host "[INFO] Looking for postman collection at: \$postmanFile"
                         
-                        if (-not (Test-Path "monitoring-reports")) {
-                            New-Item -ItemType Directory -Path "monitoring-reports" | Out-Null
+                        if (-not (Test-Path \$postmanFile)) {
+                            Write-Host "[ERROR] Postman collection not found at: \$postmanFile"
+                            exit 1
                         }
                         
-                        docker run --rm `
+                        Write-Host "[INFO] Found postman collection"
+                        Write-Host "[INFO] Running Postman tests..."
+                        
+                        # Create reports directory if needed
+                        if (-not (Test-Path \$reportsDest)) {
+                            New-Item -ItemType Directory -Path \$reportsDest -Force | Out-Null
+                        }
+                        
+                        # Run Newman
+                        & docker run --rm `
                             --network ws-assignment-net `
-                            -v "$DockerPath/postman:/postman" `
-                            -v "$DockerPath/monitoring-reports:/reports" `
+                            -v "\${postmanSource}:/postman" `
+                            -v "\${reportsDest}:/reports" `
                             postman/newman:alpine run /postman/products_api.postman_collection.json `
-                            --env-var "baseUrl=$env:MONITORING_URL" `
-                            --env-var "apiMonitoringKey=$env:MONITORING_CREDENTIALS_USR" `
+                            --env-var "baseUrl=\$env:MONITORING_URL" `
+                            --env-var "apiMonitoringKey=\$env:MONITORING_CREDENTIALS_USR" `
                             --reporters json,cli `
                             --reporter-json-export /reports/monitoring-report.json `
                             --disable-unicode
-                    '''
+                        
+                        if (\$LASTEXITCODE -ne 0) {
+                            Write-Host "[ERROR] Newman tests failed with exit code: \$LASTEXITCODE"
+                            exit \$LASTEXITCODE
+                        }
+                    """
                 }
             }
         }
