@@ -10,27 +10,23 @@ pipeline {
         cron('H/30 * * * *')
     }
 
-    parameters {
-        string(name: 'MONITORING_URL', defaultValue: 'http://localhost:8000', description: 'API endpoint to monitor')
-    }
-
     environment {
         MONITORING_CREDENTIALS = credentials('api-monitoring-credentials')
         WORK_DIR = 'github-src'
         API_CONTAINER = 'ws-assignment-api-container'
         PIPELINE_NETWORK = 'ws-assignment-net'
-        REPORTS_DIR = 'monitoring-reports'
+        API_PORT = '8000'
+        GIT_REPO_URL = 'https://github.com/gliparelli21/Web_Services_assignment.git'
+        BRANCH = 'main'
     }
 
     stages {
-        stage('Validate Monitoring Credentials') {
+        stage('Clone Repository') {
             steps {
-                script {
-                    if (!env.MONITORING_CREDENTIALS?.trim()) {
-                        error('api-monitoring-credentials is required. Please configure in Jenkins.')
-                    }
-                    echo 'Monitoring credentials validated (no conflicts detected)'
-                }
+                bat '''
+                    if exist "%WORK_DIR%" rmdir /s /q "%WORK_DIR%"
+                    git clone --depth 1 --branch "%BRANCH%" "%GIT_REPO_URL%" "%WORK_DIR%"
+                '''
             }
         }
 
@@ -39,105 +35,64 @@ pipeline {
                 bat '''
                     setlocal enabledelayedexpansion
                     
-                    REM Check if container is running
                     docker inspect -f "{{.State.Running}}" %API_CONTAINER% >nul 2>&1
                     if !errorlevel! equ 0 (
                         echo [PASS] API container is running
                     ) else (
-                        echo [FAIL] API container is not running
+                        echo [FAIL] API container not running
                         exit /b 1
                     )
                     
-                    REM Wait for API to be ready (max 30 seconds)
                     for /L %%i in (1,1,15) do (
-                        docker exec %API_CONTAINER% curl -s http://localhost:8000/docs >nul 2>&1
+                        docker exec %API_CONTAINER% curl -s http://localhost:%API_PORT%/docs >nul 2>&1
                         if !errorlevel! equ 0 (
-                            echo [PASS] API is responding to requests
+                            echo [PASS] API responding
                             exit /b 0
                         )
                         timeout /t 2 /nobreak >nul
                     )
                     
-                    echo [WARN] API responding check timed out, but container is running
-                    echo Proceeding with Postman tests...
+                    echo [WARN] API check timed out, proceeding anyway
                     exit /b 0
                 '''
             }
         }
 
-        stage('Run Postman Monitor Collection') {
+        stage('Run Postman Monitor') {
             steps {
-                powershell '''
-                    # The postman collection lives in the actual project directory
-                    $PostmanPath = "C:\\Users\\Gabriel\\Desktop\\web_services\\assignment1\\Web_Services_assignment\\postman"
-                    $ReportsPath = "${env:WORKSPACE}\\github-src\\monitoring-reports"
-                    
-                    Write-Host "[INFO] Postman path: $PostmanPath"
-                    Write-Host "[INFO] Reports path: $ReportsPath"
-                    
-                    # Verify postman collection exists
-                    $PostmanFile = "$PostmanPath\\products_api.postman_collection.json"
-                    if (-not (Test-Path $PostmanFile)) {
-                        Write-Host "[ERROR] Postman collection not found at: $PostmanFile"
-                        exit 1
-                    }
-                    
-                    Write-Host "[INFO] Found postman collection"
-                    
-                    # Create reports directory if needed
-                    if (-not (Test-Path $ReportsPath)) {
-                        New-Item -ItemType Directory -Path $ReportsPath -Force | Out-Null
-                    }
-                    
-                    # Convert paths to forward slashes for Docker
-                    $PostmanPathDocker = $PostmanPath.Replace('\\', '/')
-                    $ReportsPathDocker = $ReportsPath.Replace('\\', '/')
-                    
-                    Write-Host "[INFO] Running Newman with:"
-                    Write-Host "  Postman: $PostmanPathDocker/postman"
-                    Write-Host "  Reports: $ReportsPathDocker"
-                    
-                    # Build docker arguments
-                    $PostmanVolume = "$PostmanPathDocker`:/postman"
-                    $ReportsVolume = "$ReportsPathDocker`:/reports"
-                    
-                    Write-Host "  Docker Postman Volume: $PostmanVolume"
-                    Write-Host "  Docker Reports Volume: $ReportsVolume"
-                    
-                    # Run Newman
-                    & docker run --rm `
-                        --network ws-assignment-net `
-                        -v $PostmanVolume `
-                        -v $ReportsVolume `
-                        postman/newman:alpine run /postman/products_api.postman_collection.json `
-                        --env-var "baseUrl=$env:MONITORING_URL" `
-                        --env-var "apiMonitoringKey=$env:MONITORING_CREDENTIALS_USR" `
-                        --reporters json,cli `
-                        --reporter-json-export /reports/monitoring-report.json `
-                        --disable-unicode
-                    
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Host "[ERROR] Newman tests failed with exit code: $LASTEXITCODE"
-                        exit $LASTEXITCODE
-                    }
-                    
-                    Write-Host "[INFO] Newman tests completed successfully"
-                '''
+                dir("${WORK_DIR}") {
+                    bat '''
+                        setlocal enabledelayedexpansion
+                        if not exist monitoring-reports mkdir monitoring-reports
+                        
+                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
+                        
+                        docker run --rm ^
+                            --network %PIPELINE_NETWORK% ^
+                            -v "!CURRENT_DIR!/postman:/postman" ^
+                            -v "!CURRENT_DIR!/monitoring-reports:/reports" ^
+                            postman/newman:alpine run /postman/products_api.postman_collection.json ^
+                            --env-var "baseUrl=http://%API_CONTAINER%:%API_PORT%" ^
+                            --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
+                            --reporters json,cli ^
+                            --reporter-json-export /reports/monitoring-report.json
+                    '''
+                }
             }
         }
 
-        stage('Validate Test Results') {
+        stage('Validate Results') {
             steps {
-                script {
-                    dir("${WORK_DIR}") {
-                        def report = readJSON file: "${REPORTS_DIR}/monitoring-report.json"
-                        def failureCount = report.run.failures.size()
+                dir("${WORK_DIR}") {
+                    script {
+                        def report = readJSON file: 'monitoring-reports/monitoring-report.json'
+                        def failures = report.run.failures.size()
                         
-                        if (failureCount > 0) {
-                            echo "Monitoring detected ${failureCount} test failure(s)"
-                            unstable("${failureCount} tests failed in monitoring")
+                        if (failures > 0) {
+                            echo "Monitoring detected ${failures} failure(s)"
+                            unstable("${failures} tests failed")
                         } else {
-                            echo "All monitoring tests passed"
+                            echo "All tests passed"
                         }
                     }
                 }
@@ -148,16 +103,11 @@ pipeline {
     post {
         always {
             dir("${WORK_DIR}") {
-                archiveArtifacts artifacts: "${REPORTS_DIR}/**", allowEmptyArchive: true
+                archiveArtifacts artifacts: 'monitoring-reports/**', allowEmptyArchive: true
             }
         }
         failure {
-            script {
-                echo "API Monitoring Failed"
-                dir("${WORK_DIR}") {
-                    bat 'if exist %REPORTS_DIR%\\monitoring-report.json type %REPORTS_DIR%\\monitoring-report.json'
-                }
-            }
+            echo "API Monitoring Failed"
         }
     }
 }
