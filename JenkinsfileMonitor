@@ -77,7 +77,7 @@ pipeline {
                         for /f "delims=" %%D in ('cd') do set WORK_PATH=%%D
                         
                         REM Convert backslashes to forward slashes for Docker mount paths
-                        set DOCKER_PATH=!WORK_PATH:\=/!
+                        set DOCKER_PATH=!WORK_PATH:\\=/!
                         
                         echo [INFO] Running Postman collection from !DOCKER_PATH!/postman
                         
