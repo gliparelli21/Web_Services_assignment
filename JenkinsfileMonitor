@@ -74,8 +74,8 @@ pipeline {
                         if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
                         
                         REM Verify Postman collection exists
-                        if not exist postman\products_api.postman_collection.json (
-                            echo [ERROR] Postman collection not found at postman\products_api.postman_collection.json
+                        if not exist "postman\\products_api.postman_collection.json" (
+                            echo [ERROR] Postman collection not found at postman\\products_api.postman_collection.json
                             echo Current directory contents:
                             dir
                             echo.
