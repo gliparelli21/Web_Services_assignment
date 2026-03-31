@@ -38,11 +38,20 @@ pipeline {
                         
                         docker inspect -f "{{.State.Running}}" %API_CONTAINER% >nul 2>&1
                         if !errorlevel! equ 0 (
-                            echo [PASS] API container running
-                            exit /b 0
+                            echo [INFO] API container exists, checking health...
+                            docker exec %API_CONTAINER% curl -fsS http://localhost:8000/docs >nul 2>&1
+                            if !errorlevel! equ 0 (
+                                echo [PASS] API container is healthy
+                                exit /b 0
+                            ) else (
+                                echo [WARN] Container exists but API not responding, restarting...
+                                docker restart %API_CONTAINER%
+                                timeout /t 5 /nobreak >nul
+                                exit /b 0
+                            )
                         )
                         
-                        echo [FAIL] API container not found - run main pipeline first
+                        echo [FAIL] API container not found - run main pipeline first to start API
                         exit /b 1
                     '''
                 }
