@@ -72,7 +72,7 @@ pipeline {
                             -v "!CURRENT_DIR!/postman:/postman" ^
                             -v "!CURRENT_DIR!/monitoring-reports:/reports" ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
-                            --env-var "baseUrl=http://%API_CONTAINER%:%API_PORT%" ^
+                            --env-var "baseUrl=http://host.docker.internal:%API_PORT%" ^
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
                             --reporters json,cli ^
                             --reporter-json-export /reports/monitoring-report.json
