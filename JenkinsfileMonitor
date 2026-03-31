@@ -73,12 +73,29 @@ pipeline {
                         
                         if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
                         
+                        REM Verify Postman collection exists
+                        if not exist postman\products_api.postman_collection.json (
+                            echo [ERROR] Postman collection not found at postman\products_api.postman_collection.json
+                            echo Current directory contents:
+                            dir
+                            echo.
+                            echo Postman directory contents:
+                            if exist postman (
+                                dir postman
+                            ) else (
+                                echo Postman directory does not exist
+                            )
+                            exit /b 1
+                        )
+                        
+                        echo [INFO] Postman collection found, running tests...
+                        
                         for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
                         
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
-                            -v "!CURRENT_DIR!/postman:/postman" ^
-                            -v "!CURRENT_DIR!/%REPORTS_DIR%:/reports" ^
+                            -v "!CURRENT_DIR!\postman:/postman" ^
+                            -v "!CURRENT_DIR!\%REPORTS_DIR%:/reports" ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
                             --env-var "baseUrl=%MONITORING_URL%" ^
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
