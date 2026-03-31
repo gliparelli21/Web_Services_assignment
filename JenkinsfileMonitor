@@ -74,23 +74,24 @@ pipeline {
                         if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
                         
                         REM Verify Postman collection exists
-                        if not exist "postman\\products_api.postman_collection.json" (
-                            echo [ERROR] Postman collection not found at postman\\products_api.postman_collection.json
-                            echo Current directory contents:
-                            dir
-                            echo.
-                            echo Postman directory contents:
-                            if exist postman (
-                                dir postman
-                            ) else (
-                                echo Postman directory does not exist
+                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
+                        
+                        set "POSTMAN_FILE=!CURRENT_DIR!\\postman\\products_api.postman_collection.json"
+                        
+                        if not exist "!POSTMAN_FILE!" (
+                            echo [ERROR] Postman collection not found at !POSTMAN_FILE!
+                            echo Current directory: !CURRENT_DIR!
+                            echo Contents:
+                            dir "!CURRENT_DIR!"
+                            if exist "!CURRENT_DIR!\\postman" (
+                                echo.
+                                echo Postman directory contents:
+                                dir "!CURRENT_DIR!\\postman"
                             )
                             exit /b 1
                         )
                         
-                        echo [INFO] Postman collection found, running tests...
-                        
-                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
+                        echo [INFO] Postman collection found: !POSTMAN_FILE!
                         
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
