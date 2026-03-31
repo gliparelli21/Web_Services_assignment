@@ -73,30 +73,16 @@ pipeline {
                         
                         if not exist %REPORTS_DIR% mkdir %REPORTS_DIR%
                         
-                        REM Verify Postman collection exists
-                        for /f "delims=" %%A in ('cd') do set "CURRENT_DIR=%%A"
+                        REM Get current directory and run Newman
+                        for /f "delims=" %%D in ('cd') do set WORK_PATH=%%D
                         
-                        set "POSTMAN_FILE=!CURRENT_DIR!\\postman\\products_api.postman_collection.json"
-                        
-                        if not exist "!POSTMAN_FILE!" (
-                            echo [ERROR] Postman collection not found at !POSTMAN_FILE!
-                            echo Current directory: !CURRENT_DIR!
-                            echo Contents:
-                            dir "!CURRENT_DIR!"
-                            if exist "!CURRENT_DIR!\\postman" (
-                                echo.
-                                echo Postman directory contents:
-                                dir "!CURRENT_DIR!\\postman"
-                            )
-                            exit /b 1
-                        )
-                        
-                        echo [INFO] Postman collection found: !POSTMAN_FILE!
+                        echo [INFO] Working directory: %WORK_PATH%
+                        echo [INFO] Running Postman collection from %WORK_PATH%/postman
                         
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
-                            -v "!CURRENT_DIR!\\postman:/postman" ^
-                            -v "!CURRENT_DIR!\\%REPORTS_DIR%:/reports" ^
+                            -v %WORK_PATH%/postman:/postman ^
+                            -v %WORK_PATH%/%REPORTS_DIR%:/reports ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
                             --env-var "baseUrl=%MONITORING_URL%" ^
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
