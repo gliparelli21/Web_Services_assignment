@@ -94,8 +94,8 @@ pipeline {
                         
                         docker run --rm ^
                             --network %PIPELINE_NETWORK% ^
-                            -v "!CURRENT_DIR!\postman:/postman" ^
-                            -v "!CURRENT_DIR!\%REPORTS_DIR%:/reports" ^
+                            -v "!CURRENT_DIR!\\postman:/postman" ^
+                            -v "!CURRENT_DIR!\\%REPORTS_DIR%:/reports" ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
                             --env-var "baseUrl=%MONITORING_URL%" ^
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
