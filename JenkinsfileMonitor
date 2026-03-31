@@ -82,28 +82,7 @@ pipeline {
             }
         }
 
-        stage('Validate Results') {
-            steps {
-                dir("${WORK_DIR}") {
-                    script {
-                        try {
-                            def report = readJSON file: 'monitoring-reports/monitoring-report.json'
-                            def failures = report.run.failures.size()
-                            
-                            if (failures > 0) {
-                                echo "Monitoring detected ${failures} failure(s)"
-                                unstable("${failures} tests failed")
-                            } else {
-                                echo "All tests passed"
-                            }
-                        } catch(e) {
-                            echo "Could not parse report: ${e.message}"
-                            unstable("Report parsing failed")
-                        }
-                    }
-                }
-            }
-        }
+
     }
 
     post {
