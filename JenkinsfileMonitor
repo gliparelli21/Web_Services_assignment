@@ -90,8 +90,8 @@ pipeline {
                     }
                     
                     # Convert paths to forward slashes for Docker
-                    $PostmanPathDocker = $PostmanPath -replace '\\', '/'
-                    $ReportsPathDocker = $ReportsPath -replace '\\', '/'
+                    $PostmanPathDocker = $PostmanPath.Replace('\', '/')
+                    $ReportsPathDocker = $ReportsPath.Replace('\', '/')
                     
                     Write-Host "[INFO] Running Newman with:"
                     Write-Host "  Postman: $PostmanPathDocker/postman"
