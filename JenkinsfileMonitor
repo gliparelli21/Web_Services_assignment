@@ -11,8 +11,6 @@ pipeline {
     }
 
     environment {
-        POSTMAN_API_KEY = credentials('postman-api-key')
-        POSTMAN_MONITOR_ID = credentials('postman-monitor-id')
         WORK_DIR = 'github-src'
         API_CONTAINER = 'ws-assignment-api-container'
         PIPELINE_NETWORK = 'ws-assignment-net'
@@ -82,60 +80,21 @@ pipeline {
             }
         }
 
-        stage('Push Results to Postman Dashboard') {
+        stage('Archive Results') {
             steps {
                 dir("${WORK_DIR}") {
                     powershell '''
                         $ReportPath = "monitoring-reports/monitoring-report.json"
                         
                         if (!(Test-Path $ReportPath)) {
-                            Write-Host "[WARN] Report not found, skipping Postman push"
+                            Write-Host "[WARN] Report not found"
                             exit 0
                         }
                         
                         $Report = Get-Content $ReportPath -Raw | ConvertFrom-Json
-                        $ApiKey = $env:POSTMAN_API_KEY
-                        $MonitorId = $env:POSTMAN_MONITOR_ID
+                        $Status = if ($Report.run.failures.Count -eq 0) { "PASS" } else { "FAIL" }
                         
-                        if (-not $ApiKey -or -not $MonitorId) {
-                            Write-Host "[WARN] Postman API key or Monitor ID not configured"
-                            exit 0
-                        }
-                        
-                        # Build run data for Postman
-                        $RunData = @{
-                            result = @{
-                                stats = $Report.run.stats
-                                failures = @($Report.run.failures)
-                                executions = $Report.run.executions
-                                timings = $Report.run.timings
-                                environment = @{
-                                    baseUrl = "http://host.docker.internal:8000"
-                                }
-                            }
-                            status = if ($Report.run.failures.Count -eq 0) { "passed" } else { "failed" }
-                        }
-                        
-                        # Store results in Jenkins and log for Postman dashboard view
-                        $Summary = @{
-                            timestamp = (Get-Date).ToUniversalTime().ToString('o')
-                            status = if ($Report.run.failures.Count -eq 0) { "PASS" } else { "FAIL" }
-                            totalRequests = $Report.run.stats.requests.total
-                            totalAssertions = $Report.run.stats.assertions.total
-                            failedAssertions = $Report.run.failures.Count
-                            duration_ms = $Report.run.timings.completed
-                            monitorId = $MonitorId
-                        }
-                        
-                        Write-Host "[INFO] === Test Results Summary ==="
-                        Write-Host ($Summary | ConvertTo-Json)
-                        
-                        # For Postman cloud integration:
-                        # 1. Results are stored as Jenkins artifacts
-                        # 2. You can view Monitor runs directly in Postman app: https://app.postman.com/
-                        # 3. Consider setting up a Postman Webhook to receive notifications of test failures
-                        Write-Host "[INFO] Results archived in Jenkins"
-                        Write-Host "[INFO] View Postman Monitor: https://app.postman.com/workspaces"
+                        Write-Host "[INFO] Test Status: $Status | Requests: $($Report.run.stats.requests.total) | Duration: $($Report.run.timings.completed)ms"
                     '''
                 }
             }
