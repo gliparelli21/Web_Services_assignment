@@ -11,7 +11,6 @@ pipeline {
     }
 
     environment {
-        MONITORING_CREDENTIALS = credentials('api-monitoring-credentials')
         POSTMAN_API_KEY = credentials('postman-api-key')
         WORK_DIR = 'github-src'
         API_CONTAINER = 'ws-assignment-api-container'
@@ -75,7 +74,6 @@ pipeline {
                             -v "!CURRENT_DIR!/monitoring-reports:/reports" ^
                             postman/newman:alpine run /postman/products_api.postman_collection.json ^
                             --env-var "baseUrl=http://host.docker.internal:%API_PORT%" ^
-                            --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
                             --reporters json,cli ^
                             --reporter-json-export /reports/monitoring-report.json
                     '''
