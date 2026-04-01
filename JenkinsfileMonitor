@@ -105,7 +105,7 @@ pipeline {
                             requests = $Report.run.stats.requests.total
                             passed = $Report.run.stats.assertions.total - $Report.run.failures.Count
                             failed = $Report.run.failures.Count
-                            responseTime = $Report.run.timings.completed / 1000 # convert ms to seconds
+                            responseTime_ms = $Report.run.timings.completed
                         }
                         
                         Write-Host "[INFO] Pushing results to Postman: $($TestResults | ConvertTo-Json)"
