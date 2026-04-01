@@ -46,18 +46,23 @@ def create_completion_zip() -> None:
         "mongodb.py",
         "Dockerfile.api",
         "requirements.txt",
-        "generate_readme_txt.py",
+        "products_api.postman_collection.json",
         "README.txt",
         "Jenkinsfile",
+        "JenkinsfileMonitor",
     ]
+    
+    workspace_root = Path(__file__).parent
     
     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in files_to_include:
-            file_path = Path(file)
+            file_path = workspace_root / file
             if file_path.exists():
                 zipf.write(file_path, arcname=file)
+            else:
+                print(f"[WARN] Skipped (not found): {file}")
     
-    print(f"Created {zip_filename}")
+    print(f"[INFO] Created {zip_filename}")
     print(f"ZIPFILE={zip_filename}")
 
 
