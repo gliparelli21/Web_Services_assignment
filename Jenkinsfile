@@ -138,24 +138,16 @@ pipeline {
         stage('Generate README.txt') {
             steps {
                 dir("${WORK_DIR}") {
-                    bat '''
-                        setlocal enabledelayedexpansion
-                        
-                        REM Run script and capture zip filename
-                        for /f "tokens=2 delims==" %%F in ('docker exec %API_CONTAINER% python3 generate_readme_txt.py ^| findstr "ZIPFILE="') do (
-                            set "ZIP_FILE=%%F"
-                        )
-                        
-                        docker cp %API_CONTAINER%:/app/README.txt .
-                        
-                        if defined ZIP_FILE (
-                            docker cp %API_CONTAINER%:/app/!ZIP_FILE! .
-                        ) else (
-                            echo Warning: No zip file generated
-                            exit /b 1
-                        )
-                        
-                        if not exist README.txt exit /b 1
+                    powershell '''
+                        python3 generate_readme_zip.py
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Host "[ERROR] Failed to generate README and zip"
+                            exit 1
+                        }
+                        if (!(Test-Path "README.txt")) {
+                            Write-Host "[ERROR] README.txt not generated"
+                            exit 1
+                        }
                     '''
                 }
             }
