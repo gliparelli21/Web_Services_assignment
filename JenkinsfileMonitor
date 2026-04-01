@@ -116,25 +116,26 @@ pipeline {
                             status = if ($Report.run.failures.Count -eq 0) { "passed" } else { "failed" }
                         }
                         
-                        # Post to Postman API
-                        try {
-                            $Headers = @{
-                                "X-API-Key" = $ApiKey
-                                "Content-Type" = "application/json"
-                            }
-                            
-                            $Url = "https://api.getpostman.com/monitoring/monitors/$MonitorId/runs"
-                            $Body = $RunData | ConvertTo-Json -Depth 10
-                            
-                            Write-Host "[INFO] Posting results to Postman Monitor: $MonitorId"
-                            $Response = Invoke-WebRequest -Uri $Url -Method POST -Headers $Headers -Body $Body -ErrorAction Stop
-                            
-                            Write-Host "[PASS] Results successfully pushed to Postman"
-                            Write-Host "[INFO] View at: https://app.postman.com/workspaces"
-                        } catch {
-                            Write-Host "[WARN] Could not push to Postman API: $_"
-                            Write-Host "[INFO] Monitored data summary: Requests=$($Report.run.stats.requests.total), Passed=$($Report.run.stats.assertions.total - $Report.run.failures.Count), Failed=$($Report.run.failures.Count)"
+                        # Store results in Jenkins and log for Postman dashboard view
+                        $Summary = @{
+                            timestamp = (Get-Date).ToUniversalTime().ToString('o')
+                            status = if ($Report.run.failures.Count -eq 0) { "PASS" } else { "FAIL" }
+                            totalRequests = $Report.run.stats.requests.total
+                            totalAssertions = $Report.run.stats.assertions.total
+                            failedAssertions = $Report.run.failures.Count
+                            duration_ms = $Report.run.timings.completed
+                            monitorId = $MonitorId
                         }
+                        
+                        Write-Host "[INFO] === Test Results Summary ==="
+                        Write-Host ($Summary | ConvertTo-Json)
+                        
+                        # For Postman cloud integration:
+                        # 1. Results are stored as Jenkins artifacts
+                        # 2. You can view Monitor runs directly in Postman app: https://app.postman.com/
+                        # 3. Consider setting up a Postman Webhook to receive notifications of test failures
+                        Write-Host "[INFO] Results archived in Jenkins"
+                        Write-Host "[INFO] View Postman Monitor: https://app.postman.com/workspaces"
                     '''
                 }
             }
