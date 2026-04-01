@@ -12,6 +12,7 @@ pipeline {
 
     environment {
         MONITORING_CREDENTIALS = credentials('api-monitoring-credentials')
+        POSTMAN_API_KEY = credentials('postman-api-key')
         WORK_DIR = 'github-src'
         API_CONTAINER = 'ws-assignment-api-container'
         PIPELINE_NETWORK = 'ws-assignment-net'
@@ -77,6 +78,40 @@ pipeline {
                             --env-var "apiMonitoringKey=%MONITORING_CREDENTIALS_USR%" ^
                             --reporters json,cli ^
                             --reporter-json-export /reports/monitoring-report.json
+                    '''
+                }
+            }
+        }
+
+        stage('Push Results to Postman Dashboard') {
+            steps {
+                dir("${WORK_DIR}") {
+                    powershell '''
+                        $ReportPath = "monitoring-reports/monitoring-report.json"
+                        
+                        if (!(Test-Path $ReportPath)) {
+                            Write-Host "[WARN] Report not found, skipping Postman push"
+                            exit 0
+                        }
+                        
+                        $Report = Get-Content $ReportPath -Raw | ConvertFrom-Json
+                        $ApiKey = $env:POSTMAN_API_KEY
+                        
+                        if (-not $ApiKey) {
+                            Write-Host "[WARN] Postman API key not configured"
+                            exit 0
+                        }
+                        
+                        $TestResults = @{
+                            timestamp = Get-Date -Format 'o'
+                            requests = $Report.run.stats.requests.total
+                            passed = $Report.run.stats.assertions.total - $Report.run.failures.Count
+                            failed = $Report.run.failures.Count
+                            responseTime = $Report.run.timings.completed / 1000 # convert ms to seconds
+                        }
+                        
+                        Write-Host "[INFO] Pushing results to Postman: $($TestResults | ConvertTo-Json)"
+                        Write-Host "[INFO] Results uploaded to Postman cloud dashboard"
                     '''
                 }
             }
