@@ -12,6 +12,7 @@ pipeline {
 
     environment {
         POSTMAN_API_KEY = credentials('postman-api-key')
+        POSTMAN_MONITOR_ID = credentials('postman-monitor-id')
         WORK_DIR = 'github-src'
         API_CONTAINER = 'ws-assignment-api-container'
         PIPELINE_NETWORK = 'ws-assignment-net'
@@ -94,22 +95,46 @@ pipeline {
                         
                         $Report = Get-Content $ReportPath -Raw | ConvertFrom-Json
                         $ApiKey = $env:POSTMAN_API_KEY
+                        $MonitorId = $env:POSTMAN_MONITOR_ID
                         
-                        if (-not $ApiKey) {
-                            Write-Host "[WARN] Postman API key not configured"
+                        if (-not $ApiKey -or -not $MonitorId) {
+                            Write-Host "[WARN] Postman API key or Monitor ID not configured"
                             exit 0
                         }
                         
-                        $TestResults = @{
-                            timestamp = Get-Date -Format 'o'
-                            requests = $Report.run.stats.requests.total
-                            passed = $Report.run.stats.assertions.total - $Report.run.failures.Count
-                            failed = $Report.run.failures.Count
-                            responseTime_ms = $Report.run.timings.completed
+                        # Build run data for Postman
+                        $RunData = @{
+                            result = @{
+                                stats = $Report.run.stats
+                                failures = @($Report.run.failures)
+                                executions = $Report.run.executions
+                                timings = $Report.run.timings
+                                environment = @{
+                                    baseUrl = "http://host.docker.internal:8000"
+                                }
+                            }
+                            status = if ($Report.run.failures.Count -eq 0) { "passed" } else { "failed" }
                         }
                         
-                        Write-Host "[INFO] Pushing results to Postman: $($TestResults | ConvertTo-Json)"
-                        Write-Host "[INFO] Results uploaded to Postman cloud dashboard"
+                        # Post to Postman API
+                        try {
+                            $Headers = @{
+                                "X-API-Key" = $ApiKey
+                                "Content-Type" = "application/json"
+                            }
+                            
+                            $Url = "https://api.getpostman.com/monitoring/monitors/$MonitorId/runs"
+                            $Body = $RunData | ConvertTo-Json -Depth 10
+                            
+                            Write-Host "[INFO] Posting results to Postman Monitor: $MonitorId"
+                            $Response = Invoke-WebRequest -Uri $Url -Method POST -Headers $Headers -Body $Body -ErrorAction Stop
+                            
+                            Write-Host "[PASS] Results successfully pushed to Postman"
+                            Write-Host "[INFO] View at: https://app.postman.com/workspaces"
+                        } catch {
+                            Write-Host "[WARN] Could not push to Postman API: $_"
+                            Write-Host "[INFO] Monitored data summary: Requests=$($Report.run.stats.requests.total), Passed=$($Report.run.stats.assertions.total - $Report.run.failures.Count), Failed=$($Report.run.failures.Count)"
+                        }
                     '''
                 }
             }
