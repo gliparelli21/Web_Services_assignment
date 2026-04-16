@@ -79,7 +79,7 @@ pipeline {
             steps {
                 dir("${WORK_DIR}") {
                     powershell '''
-                        $maxRetries = 60
+                        $maxRetries = 80
                         $retryCount = 0
                         $ready = $false
                         
@@ -92,10 +92,10 @@ pipeline {
                                     exit 0
                                 }
                             } catch {
-                                Write-Host "Attempt $($retryCount + 1)/$maxRetries: API not ready, waiting..."
+                                Write-Host "Attempt $($retryCount + 1)/${maxRetries}: API not ready, waiting..."
                             }
                             $retryCount++
-                            Start-Sleep -Seconds 2
+                            Start-Sleep -Seconds 3
                         }
                         
                         if (-not $ready) {
