@@ -78,19 +78,31 @@ pipeline {
         stage('Wait For API Readiness') {
             steps {
                 dir("${WORK_DIR}") {
-                    bat '''
-                        setlocal enabledelayedexpansion
-                        for /L %%i in (1,1,60) do (
-                            docker exec %API_CONTAINER% curl -fsS http://localhost:8000/docs >nul 2>&1
-                            if !errorlevel! equ 0 (
-                                echo API is ready
-                                exit /b 0
-                            )
-                            timeout /t 2 /nobreak >nul
-                        )
-                        echo API failed to start
-                        docker logs %API_CONTAINER%
-                        exit /b 1
+                    powershell '''
+                        $maxRetries = 60
+                        $retryCount = 0
+                        $ready = $false
+                        
+                        while ($retryCount -lt $maxRetries -and -not $ready) {
+                            try {
+                                $response = docker exec ${env:API_CONTAINER} curl -fsS http://localhost:8000/docs 2>$null
+                                if ($LASTEXITCODE -eq 0) {
+                                    Write-Host "API is ready"
+                                    $ready = $true
+                                    exit 0
+                                }
+                            } catch {
+                                Write-Host "Attempt $($retryCount + 1)/$maxRetries: API not ready, waiting..."
+                            }
+                            $retryCount++
+                            Start-Sleep -Seconds 2
+                        }
+                        
+                        if (-not $ready) {
+                            Write-Host "API failed to start"
+                            docker logs ${env:API_CONTAINER}
+                            exit 1
+                        }
                     '''
                 }
             }
